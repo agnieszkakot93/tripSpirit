@@ -47,3 +47,20 @@ next-env.d.ts
 .dev.vars*
 !.dev.vars.example
 .drizzle-kit.sqlite
+
+# Cursor IDE — personal / tool artifacts
+.cursor/settings.json
+.cursor/.10x-cli-manifest.json
+.cursor/prompts/
+.cursor/rules/10x-course.mdc
+.cursor/skills/
+
+# Local MCP config
+.mcp.json
+
+# Project context / planning docs
+context/
+
+# Stray copy/backup files
+*\ copy.*
+*.scaffold
