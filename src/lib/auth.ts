@@ -53,14 +53,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
       }),
     ],
     callbacks: {
-      authorized({ auth: session, request }) {
-        const path = request.nextUrl.pathname;
-        const isPublic =
-          path === "/" ||
-          path === "/login" ||
-          path.startsWith("/api/auth/");
-        return !!session || isPublic;
-      },
+      // Route guarding lives in src/lib/auth-edge.ts (the proxy config).
+      // `authorized` only runs in the proxy/middleware path, so it is
+      // intentionally omitted here to keep a single source of truth.
       async jwt({ token, user }) {
         if (user?.id) token.sub = user.id;
         return token;
