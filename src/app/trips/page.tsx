@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 
 export default async function TripsPage() {
   const session = await auth();
@@ -22,12 +22,27 @@ export default async function TripsPage() {
         Saved itineraries will appear here once the trip planner UI is wired up
         (FR-004–FR-012).
       </p>
-      <Link
-        href="/"
-        className="text-sm font-medium text-zinc-800 underline dark:text-zinc-200"
-      >
-        ← Home
-      </Link>
+      <div className="flex items-center gap-4">
+        <Link
+          href="/"
+          className="text-sm font-medium text-zinc-800 underline dark:text-zinc-200"
+        >
+          ← Home
+        </Link>
+        <form
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/" });
+          }}
+        >
+          <button
+            type="submit"
+            className="text-sm font-medium text-zinc-500 underline dark:text-zinc-400"
+          >
+            Sign out
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

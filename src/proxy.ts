@@ -1,18 +1,5 @@
-import { NextResponse } from "next/server";
-
-import { auth } from "@/lib/auth";
-
-export const proxy = auth((req) => {
-  const path = req.nextUrl.pathname;
-  const isTripsArea = path === "/trips" || path.startsWith("/trips/");
-  if (!req.auth && isTripsArea) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("callbackUrl", req.nextUrl.pathname);
-    return NextResponse.redirect(url);
-  }
-});
+export { auth as proxy } from "@/lib/auth-edge";
 
 export const config = {
-  matcher: ["/trips", "/trips/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|api/auth).*)"],
 };
