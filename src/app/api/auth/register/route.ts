@@ -6,8 +6,6 @@ import { users } from "@/db/schema";
 import { getDb } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 
-export const runtime = "edge";
-
 type RegisterBody = {
   email?: unknown;
   password?: unknown;
