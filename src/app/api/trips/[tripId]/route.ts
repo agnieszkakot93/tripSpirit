@@ -16,13 +16,17 @@ export async function GET(
 
   const { tripId } = await params;
 
-  await getCloudflareContext({ async: true });
-  const db = getDb();
-  const trip = await getTripForUser(db, session.user.id, tripId);
+  try {
+    await getCloudflareContext({ async: true });
+    const db = getDb();
+    const trip = await getTripForUser(db, session.user.id, tripId);
 
-  if (!trip) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!trip) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(trip);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  return NextResponse.json(trip);
 }

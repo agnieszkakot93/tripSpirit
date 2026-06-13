@@ -5,12 +5,16 @@ import type { AppDatabase } from "@/lib/db";
 
 export type TripRow = typeof trips.$inferSelect;
 
+// Safety cap until list pagination is introduced (Phase 1 has no pagination spec).
+const TRIP_LIST_LIMIT = 100;
+
 export function listTripsForUser(db: AppDatabase, userId: string) {
   return db
     .select()
     .from(trips)
     .where(eq(trips.userId, userId))
-    .orderBy(desc(trips.createdAt));
+    .orderBy(desc(trips.createdAt))
+    .limit(TRIP_LIST_LIMIT);
 }
 
 export function getTripForUser(

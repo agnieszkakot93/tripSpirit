@@ -12,10 +12,14 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await getCloudflareContext({ async: true });
-  const db = getDb();
-  const trips = await listTripsForUser(db, session.user.id);
-  return NextResponse.json(trips);
+  try {
+    await getCloudflareContext({ async: true });
+    const db = getDb();
+    const trips = await listTripsForUser(db, session.user.id);
+    return NextResponse.json(trips);
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -36,8 +40,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  await getCloudflareContext({ async: true });
-  const db = getDb();
-  const trip = await insertTrip(db, session.user.id, result.values);
-  return NextResponse.json(trip, { status: 201 });
+  try {
+    await getCloudflareContext({ async: true });
+    const db = getDb();
+    const trip = await insertTrip(db, session.user.id, result.values);
+    return NextResponse.json(trip, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }
