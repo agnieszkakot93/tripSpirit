@@ -37,6 +37,8 @@ export function TripCreateForm() {
       }
       router.push(`/trips/${data.id}`);
       router.refresh();
+    } catch {
+      setError("Network error — please try again");
     } finally {
       setPending(false);
     }

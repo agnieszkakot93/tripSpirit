@@ -8,9 +8,19 @@ export type TripRow = typeof trips.$inferSelect;
 // Safety cap until list pagination is introduced (Phase 1 has no pagination spec).
 const TRIP_LIST_LIMIT = 100;
 
+// Exclude itinerary_json from the list query — the cards never render it and
+// it will hold large JSON blobs once S-03 populates itineraries.
 export function listTripsForUser(db: AppDatabase, userId: string) {
   return db
-    .select()
+    .select({
+      id: trips.id,
+      userId: trips.userId,
+      destination: trips.destination,
+      durationDays: trips.durationDays,
+      budgetAmount: trips.budgetAmount,
+      createdAt: trips.createdAt,
+      updatedAt: trips.updatedAt,
+    })
     .from(trips)
     .where(eq(trips.userId, userId))
     .orderBy(desc(trips.createdAt))
