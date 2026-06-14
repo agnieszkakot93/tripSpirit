@@ -64,6 +64,37 @@ export function insertTrip(
     .then((rows) => rows[0]);
 }
 
+export async function updateTrip(
+  db: AppDatabase,
+  userId: string,
+  tripId: string,
+  values: { destination: string; durationDays: number; budgetAmount: number },
+): Promise<TripRow | null> {
+  const rows = await db
+    .update(trips)
+    .set({
+      destination: values.destination,
+      durationDays: values.durationDays,
+      budgetAmount: values.budgetAmount,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(trips.id, tripId), eq(trips.userId, userId)))
+    .returning();
+  return rows[0] ?? null;
+}
+
+export async function deleteTrip(
+  db: AppDatabase,
+  userId: string,
+  tripId: string,
+): Promise<boolean> {
+  const rows = await db
+    .delete(trips)
+    .where(and(eq(trips.id, tripId), eq(trips.userId, userId)))
+    .returning({ id: trips.id });
+  return rows.length > 0;
+}
+
 /**
  * Persist a generated itinerary, scoped to the owner and idempotent: the write
  * only lands when `itinerary_json IS NULL`, so a one-shot generation can never
