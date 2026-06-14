@@ -8,12 +8,17 @@ import { SiteHeader } from "@/components/site-header";
 import { formatBudget, formatDuration } from "@/components/trip-card";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { itinerarySchema } from "@/lib/trips/itinerary";
 import { getTripForUser } from "@/lib/trips/queries";
 
 function parseItinerary(json: string | null): PartialItinerary | null {
   if (!json) return null;
   try {
-    return JSON.parse(json) as PartialItinerary;
+    const raw = JSON.parse(json);
+    // Prefer the schema-validated shape; fall back to best-effort partial
+    // render for older/odd stored values (the view tolerates partial data).
+    const result = itinerarySchema.safeParse(raw);
+    return result.success ? result.data : (raw as PartialItinerary);
   } catch {
     return null;
   }
