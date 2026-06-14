@@ -2,11 +2,22 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ItineraryGenerator } from "@/components/itinerary-generator";
+import { ItineraryView, type PartialItinerary } from "@/components/itinerary-view";
 import { SiteHeader } from "@/components/site-header";
 import { formatBudget, formatDuration } from "@/components/trip-card";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getTripForUser } from "@/lib/trips/queries";
+
+function parseItinerary(json: string | null): PartialItinerary | null {
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as PartialItinerary;
+  } catch {
+    return null;
+  }
+}
 
 export default async function TripDetailPage({
   params,
@@ -26,6 +37,8 @@ export default async function TripDetailPage({
   // notFound() for both missing and wrong-owner so we never leak the
   // existence of another user's trip via a distinct error.
   if (!trip) notFound();
+
+  const savedItinerary = parseItinerary(trip.itineraryJson);
 
   return (
     <main className="mx-auto flex min-h-full max-w-2xl flex-col gap-6 px-6 py-16">
@@ -47,15 +60,18 @@ export default async function TripDetailPage({
         </p>
       </div>
 
-      <section className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-6 dark:border-zinc-700 dark:bg-zinc-900">
-        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
-          Itinerary
-        </h2>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          No itinerary yet. AI itinerary generation arrives in a later update —
-          your trip details are saved and ready.
-        </p>
-      </section>
+      {savedItinerary ? (
+        // One-shot: a saved itinerary renders read-only — no Generate button
+        // (no regenerate, per PRD Non-Goals).
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
+            Itinerary
+          </h2>
+          <ItineraryView itinerary={savedItinerary} />
+        </section>
+      ) : (
+        <ItineraryGenerator tripId={trip.id} />
+      )}
     </main>
   );
 }
