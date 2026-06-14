@@ -64,3 +64,4 @@ context/
 # Stray copy/backup files
 *\ copy.*
 *.scaffold
+.dev-ca-bundle.pem
