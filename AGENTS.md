@@ -23,6 +23,28 @@ Then start the dev server:
 npm run dev
 ```
 
+# Secrets & environment variables
+
+Code reads every secret via `getCloudflareContext().env.<NAME>` (e.g. `env.OPENAI_API_KEY`, `env.AUTH_SECRET`) — **never `process.env`** (it is not reliably populated on the workerd runtime). New secrets must be added to the `CloudflareEnv` type in `cloudflare-env.d.ts` (regenerate with `npx wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts`).
+
+Where each secret lives by environment:
+
+| Environment | Source | Committed? |
+| --- | --- | --- |
+| Local dev (`npm run dev` / `npm run preview:cf`) | `.dev.vars` (`KEY=value` per line) | No — gitignored |
+| Production (Cloudflare) | **Worker secret** | No — stored encrypted by Cloudflare |
+
+**Set/rotate a production secret** (write-only; not readable after creation, run again to rotate — no downtime):
+```bash
+npx wrangler secret put OPENAI_API_KEY
+```
+Or: Cloudflare dashboard → Workers & Pages → project → Settings → Variables & Secrets → add as a **Secret** (not plaintext). `.dev.vars` is local-only and never deploys — provisioning the production secret is a separate, required step.
+
+Notes:
+- Never paste a real key into chat, commit it, or log it. If one is exposed, **revoke it in the provider dashboard** — deleting the local copy does not invalidate it.
+- The free Cloudflare plan's 10ms CPU ceiling 500s AI routes; the **$5/mo paid plan is the production minimum** for AI generation (see `context/foundation/infrastructure.md`).
+- `.dev-ca-bundle.pem` + the `NODE_EXTRA_CA_CERTS` entry in `.claude/launch.json` are a **local-only** workaround for a corporate TLS proxy so `next dev` can reach external APIs (e.g. OpenAI). Production workerd does not use or need them.
+
 # Verifying changes
 
 After implementing any change, verify it by running the app — not by running tests or typechecks alone. Use the `/verify` skill:
