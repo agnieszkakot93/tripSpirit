@@ -1,7 +1,8 @@
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, isNull } from "drizzle-orm";
 
 import { trips } from "@/db/schema";
 import type { AppDatabase } from "@/lib/db";
+import type { Itinerary } from "@/lib/trips/itinerary";
 
 export type TripRow = typeof trips.$inferSelect;
 
@@ -61,4 +62,33 @@ export function insertTrip(
     })
     .returning()
     .then((rows) => rows[0]);
+}
+
+/**
+ * Persist a generated itinerary, scoped to the owner and idempotent: the write
+ * only lands when `itinerary_json IS NULL`, so a one-shot generation can never
+ * overwrite an existing itinerary (S-03 has no regenerate). Returns true if a
+ * row was actually written, false on no-op (already generated / not owner).
+ */
+export async function updateTripItinerary(
+  db: AppDatabase,
+  userId: string,
+  tripId: string,
+  itinerary: Itinerary,
+): Promise<boolean> {
+  const rows = await db
+    .update(trips)
+    .set({
+      itineraryJson: JSON.stringify(itinerary),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(trips.id, tripId),
+        eq(trips.userId, userId),
+        isNull(trips.itineraryJson),
+      ),
+    )
+    .returning({ id: trips.id });
+  return rows.length > 0;
 }
