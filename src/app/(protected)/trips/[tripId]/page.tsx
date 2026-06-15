@@ -6,6 +6,7 @@ import { ItineraryGenerator } from "@/components/itinerary-generator";
 import { ItineraryView, type PartialItinerary } from "@/components/itinerary-view";
 import { SiteHeader } from "@/components/site-header";
 import { formatBudget, formatDuration } from "@/components/trip-card";
+import { TripActions } from "@/components/trip-actions";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { itinerarySchema } from "@/lib/trips/itinerary";
@@ -65,6 +66,13 @@ export default async function TripDetailPage({
         </p>
       </div>
 
+      <TripActions
+        id={trip.id}
+        destination={trip.destination}
+        durationDays={trip.durationDays}
+        budgetAmount={trip.budgetAmount}
+      />
+
       {savedItinerary ? (
         // One-shot: a saved itinerary renders read-only — no Generate button
         // (no regenerate, per PRD Non-Goals).
@@ -72,6 +80,12 @@ export default async function TripDetailPage({
           <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
             Itinerary
           </h2>
+          {savedItinerary ? (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              This itinerary reflects the trip details at the time it was
+              generated. Editing the trip does not regenerate it.
+            </p>
+          ) : null}
           <ItineraryView itinerary={savedItinerary} />
         </section>
       ) : (
