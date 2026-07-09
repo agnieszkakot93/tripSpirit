@@ -1,0 +1,23 @@
+**Depends on:** #2 (S-02: trips)
+
+> **North star:** First slice that validates the core product hypothesis — if shipped and used by even one real user, it answers whether the product direction is worth continuing.
+
+### S-03: User can generate and view a day-by-day AI itinerary for a trip
+
+- **Outcome:** user can trigger AI generation for a saved trip and see a day-by-day itinerary with per-day activities and approximate cost estimates, with a visible loading state during generation and an error message if generation exceeds 30 seconds
+- **Change ID:** `ai-itinerary-generation`
+- **PRD refs:** FR-009, FR-010, US-01
+- **Prerequisites:** S-02
+- **Parallel with:** S-04
+- **Blockers:** —
+- **Unknowns:**
+  - What prompt shape produces a consistently useful itinerary (activity variety, cost accuracy, day balance)? — Owner: team. Block: no (implementation concern for `/10x-plan`).
+  - PRD Open Question 2: what makes TripSprint AI's output different from a generic AI tool? — Owner: user. Block: no (useful for prompt design, not blocking generation).
+- **Risk:** This is the riskiest slice — the 30-second NFR sits at the Cloudflare edge runtime's timeout ceiling. `OPENAI_API_KEY` is set as a Worker secret. Streaming responses are the standard mitigation; if the AI call exceeds the limit, the error path must be reliable. Sequenced as early as S-02 allows because this is the validation milestone.
+- **Status:** proposed
+
+**Backlog handoff:** Run `/10x-plan ai-itinerary-generation` (after S-02).
+
+---
+
+Source: `context/foundation/roadmap.md` (updated 2026-06-09)

@@ -58,10 +58,6 @@ next-env.d.ts
 # Local MCP config
 .mcp.json
 
-# Change-scoped working docs (foundation docs under context/foundation/ are tracked)
-context/changes/
-context/archive/
-
 # Stray copy/backup files
 *\ copy.*
 *.scaffold
