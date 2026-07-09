@@ -2,36 +2,77 @@
 
 import { useState } from "react";
 
-import { MapPinIcon, PlusIcon, SuitcaseIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 import { TripCreateModal } from "@/components/trip-create-modal";
+
+function EmptyIllustration() {
+  return (
+    <svg
+      viewBox="0 0 200 140"
+      className="mx-auto h-36 w-56"
+      fill="none"
+      aria-hidden
+    >
+      <ellipse cx="100" cy="120" rx="70" ry="8" fill="#f0e8dc" />
+      <rect
+        x="55"
+        y="45"
+        width="90"
+        height="60"
+        rx="8"
+        fill="#fffaf3"
+        stroke="#ded6ca"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M70 85 L100 55 L130 85 Z"
+        fill="#ff7a3d"
+        opacity="0.25"
+      />
+      <circle cx="100" cy="68" r="6" fill="#ff7a3d" />
+      <rect
+        x="130"
+        y="60"
+        width="28"
+        height="22"
+        rx="4"
+        fill="#e8dfd3"
+        stroke="#ded6ca"
+      />
+      <circle cx="144" cy="71" r="5" fill="#c4b8a8" />
+      <path
+        d="M40 95 Q50 75 65 90 T90 88"
+        stroke="#c8e6c9"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M115 92 Q125 78 140 90"
+        stroke="#c8e6c9"
+        strokeWidth="3"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
 
 export function EmptyWorkspace() {
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
     <>
-      <div className="relative flex h-full min-h-[480px] items-center justify-center overflow-hidden p-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-60"
-          style={{
-            background:
-              "radial-gradient(circle at 20% 20%, rgba(255,122,61,0.12), transparent 40%), radial-gradient(circle at 80% 80%, rgba(255,194,140,0.2), transparent 35%)",
-          }}
-        />
+      <div className="flex h-full min-h-[520px] items-center justify-center">
+        <div className="relative w-full max-w-lg rounded-[32px] border border-dashed border-[var(--border)] bg-white px-10 py-12 text-center shadow-[0_20px_60px_rgba(49,33,20,0.05)]">
+          <EmptyIllustration />
 
-        <div className="relative max-w-md text-center">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-white shadow-[0_20px_60px_rgba(49,33,20,0.08)]">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(255,122,61,0.14)] text-[var(--primary)]">
-              <SuitcaseIcon className="h-6 w-6" />
-            </span>
-          </div>
-
-          <h1 className="mt-8 text-3xl font-black tracking-tight text-[var(--foreground)]">
+          <h2 className="mt-6 text-2xl font-black tracking-tight text-[var(--foreground)]">
             Plan your first city break
-          </h1>
-          <p className="mx-auto mt-3 max-w-sm leading-relaxed text-[var(--muted)]">
-            Create a trip, generate a day-by-day itinerary with AI, then
-            customize activities and costs.
+          </h2>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-[var(--muted)]">
+            Your AI-generated city-break itinerary will appear here. Create a
+            trip to get started.
           </p>
 
           <button
@@ -43,23 +84,12 @@ export function EmptyWorkspace() {
             Create trip
           </button>
 
-          <div className="mt-10 grid gap-3 text-left">
-            {[
-              "Pick a destination and budget",
-              "Generate an AI itinerary in seconds",
-              "Edit days, activities, and costs",
-            ].map((step, i) => (
-              <div
-                key={step}
-                className="flex items-center gap-3 rounded-2xl border border-[var(--border-muted)] bg-white/80 px-4 py-3 text-sm text-[var(--foreground)] backdrop-blur"
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-black text-[var(--primary-foreground)]">
-                  {i + 1}
-                </span>
-                {step}
-              </div>
-            ))}
-          </div>
+          <p
+            className="pointer-events-none mt-8 text-lg text-[#c4a882]"
+            style={{ fontFamily: "cursive" }}
+          >
+            Let&apos;s plan your next adventure ✈️
+          </p>
         </div>
       </div>
 
@@ -69,18 +99,41 @@ export function EmptyWorkspace() {
 }
 
 export function WorkspacePlaceholder() {
+  const [createOpen, setCreateOpen] = useState(false);
+
   return (
-    <div className="flex h-full min-h-[480px] flex-col items-center justify-center p-8 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[rgba(255,122,61,0.12)] text-[var(--primary)]">
-        <MapPinIcon className="h-8 w-8" />
+    <>
+      <div className="flex h-full min-h-[520px] items-center justify-center">
+        <div className="relative w-full max-w-lg rounded-[32px] border border-dashed border-[var(--border)] bg-white px-10 py-12 text-center shadow-[0_20px_60px_rgba(49,33,20,0.05)]">
+          <EmptyIllustration />
+
+          <h2 className="mt-6 text-2xl font-black tracking-tight text-[var(--foreground)]">
+            Select or create a trip
+          </h2>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-[var(--muted)]">
+            Your AI-generated city-break itinerary will appear here. Pick a trip
+            from the list or create a new one.
+          </p>
+
+          <button
+            type="button"
+            className="btn-primary mx-auto mt-8 inline-flex items-center gap-2 px-8"
+            onClick={() => setCreateOpen(true)}
+          >
+            <PlusIcon />
+            Create trip
+          </button>
+
+          <p
+            className="pointer-events-none mt-8 text-lg text-[#c4a882]"
+            style={{ fontFamily: "cursive" }}
+          >
+            Let&apos;s plan your next adventure ✈️
+          </p>
+        </div>
       </div>
-      <h2 className="mt-6 text-xl font-black text-[var(--foreground)]">
-        Select a trip to get started
-      </h2>
-      <p className="mt-2 max-w-sm text-sm text-[var(--muted)]">
-        Choose a destination from the list on the left to view and edit your
-        itinerary.
-      </p>
-    </div>
+
+      <TripCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
+    </>
   );
 }

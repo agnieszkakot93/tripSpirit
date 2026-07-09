@@ -29,7 +29,7 @@ export default async function ProtectedLayout({
     : [];
 
   return (
-    <AppShell userEmail={session.user?.email} trips={trips}>
+    <AppShell userEmail={session.user?.email} userName={session.user?.name} trips={trips}>
       {children}
     </AppShell>
   );

@@ -45,7 +45,7 @@ export function TripWorkspace({
   const withinBudget = totalCost <= budgetAmount;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col rounded-[28px] border border-[var(--border-muted)] bg-white overflow-hidden shadow-[0_4px_24px_rgba(49,33,20,0.04)]">
       <div className="relative shrink-0">
         <div
           className="h-48 bg-cover bg-center"
