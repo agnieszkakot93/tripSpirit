@@ -1,22 +1,26 @@
 "use client";
 
 import { experimental_useObject as useObject } from "@ai-sdk/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ItineraryView } from "@/components/itinerary-view";
 import { itinerarySchema } from "@/lib/trips/itinerary";
 
 export function ItineraryGenerator({ tripId }: { tripId: string }) {
+  const router = useRouter();
   const [started, setStarted] = useState(false);
-  // The route returns 200 with an empty stream when generation fails server-side
-  // (e.g. OpenAI error/timeout), so "finished with no object" is also an error.
   const [emptyError, setEmptyError] = useState(false);
 
   const { submit, object, isLoading, error } = useObject({
     api: `/api/trips/${tripId}/itinerary`,
     schema: itinerarySchema,
-    onFinish: ({ object }) => {
-      if (!object) setEmptyError(true);
+    onFinish: ({ object: finished }) => {
+      if (!finished) {
+        setEmptyError(true);
+        return;
+      }
+      router.refresh();
     },
   });
 
@@ -29,45 +33,47 @@ export function ItineraryGenerator({ tripId }: { tripId: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
-          Itinerary
-        </h2>
-        {isLoading ? (
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">
-            Generating…
-          </span>
-        ) : null}
-      </div>
-
+    <section className="grid gap-6">
       {!started ? (
-        <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-6 dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            No itinerary yet. Generate a day-by-day plan for this trip.
+        <div className="rounded-[28px] border border-dashed border-[var(--border)] bg-white px-8 py-16 text-center">
+          <h2 className="text-xl font-black text-[var(--foreground)]">
+            No itinerary yet
+          </h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">
+            Generate a day-by-day plan with activities and approximate costs
+            tailored to your destination, duration, and budget.
           </p>
           <button
             type="button"
             onClick={generate}
-            className="mt-3 rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
+            className="btn-primary mt-6"
           >
             Generate itinerary
           </button>
         </div>
       ) : null}
 
+      {isLoading ? (
+        <div className="rounded-[28px] border border-[var(--border-muted)] bg-white p-8 text-center">
+          <p className="text-sm font-semibold text-[var(--foreground)]">
+            Generating your itinerary…
+          </p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            This usually takes 15–30 seconds.
+          </p>
+        </div>
+      ) : null}
+
       {object ? <ItineraryView itinerary={object} /> : null}
 
       {failed ? (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-950">
-          <p className="text-sm text-red-800 dark:text-red-200" role="alert">
-            Generation failed — please try again.
-          </p>
+        <div className="alert-error">
+          <p role="alert">Generation failed — please try again.</p>
           <button
             type="button"
             onClick={generate}
             disabled={isLoading}
-            className="mt-2 rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900"
+            className="btn-primary mt-3"
           >
             Try again
           </button>

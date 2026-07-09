@@ -2,12 +2,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { AppShell } from "@/components/layout/app-shell";
 import { auth } from "@/lib/auth";
+import { getDb } from "@/lib/db";
+import { listTripsForUser } from "@/lib/trips/queries";
 
-// Auth gate for every route in this group. Replaces the former proxy.ts
-// middleware guard — @opennextjs/cloudflare does not support Next.js 16's
-// Node-runtime proxy, so protection lives in a Server Component layout.
-// API routes are guarded separately inside their own handlers.
 export default async function ProtectedLayout({
   children,
 }: {
@@ -17,13 +16,25 @@ export default async function ProtectedLayout({
   if (!session) {
     redirect(`/login${await callbackQuery()}`);
   }
-  return <>{children}</>;
+
+  const userId = session.user?.id;
+  const trips = userId
+    ? (await listTripsForUser(await getDb(), userId)).map((t) => ({
+        id: t.id,
+        destination: t.destination,
+        durationDays: t.durationDays,
+        budgetAmount: t.budgetAmount,
+        updatedAt: t.updatedAt,
+      }))
+    : [];
+
+  return (
+    <AppShell userEmail={session.user?.email} trips={trips}>
+      {children}
+    </AppShell>
+  );
 }
 
-// Derive `?callbackUrl=<original-path>` so sign-in returns the user to the
-// route they requested. There is no official RSC pathname API; under the
-// Cloudflare runtime OpenNext exposes the full request URL via
-// `x-opennext-initial-url`, with `next-url` as a fallback for `next dev`.
 async function callbackQuery(): Promise<string> {
   const requestHeaders = await headers();
   let path: string | null = null;

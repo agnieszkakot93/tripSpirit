@@ -1,8 +1,5 @@
-import { formatBudget } from "@/components/trip-card";
+import { formatBudget } from "@/lib/format";
 
-// Loose, deeply-partial shape: the same component renders a fully-saved
-// itinerary (read-only) and a mid-stream partial object, so every field is
-// treated as possibly-undefined.
 type PartialActivity = {
   name?: string;
   description?: string;
@@ -46,8 +43,8 @@ export function ItineraryView({ itinerary }: { itinerary: PartialItinerary }) {
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      <ul className="flex flex-col gap-4">
+    <div className="grid gap-5">
+      <ul className="grid gap-4">
         {days.map((day, i) => {
           const activities = (day.activities ?? []).filter(
             (a): a is PartialActivity => a != null,
@@ -55,30 +52,36 @@ export function ItineraryView({ itinerary }: { itinerary: PartialItinerary }) {
           return (
             <li
               key={i}
-              className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950"
+              className="rounded-[28px] border border-[var(--border-muted)] bg-white p-6 shadow-[0_20px_60px_rgba(49,33,20,0.07)]"
             >
               <div className="flex items-baseline justify-between gap-3">
-                <h3 className="font-medium text-zinc-900 dark:text-zinc-50">
+                <h3 className="text-lg font-black text-[var(--foreground)]">
                   Day {day.day ?? i + 1}
-                  {day.title ? ` · ${day.title}` : ""}
+                  {day.title ? `: ${day.title}` : ""}
                 </h3>
                 {activities.length > 0 ? (
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <span className="text-sm text-[var(--muted)]">
                     {formatBudget(dayCost(activities))}
                   </span>
                 ) : null}
               </div>
-              <ul className="mt-2 flex flex-col gap-2">
+              <ul className="mt-4 grid gap-3">
                 {activities.map((activity, j) => (
-                  <li key={j} className="flex justify-between gap-3 text-sm">
-                    <span className="text-zinc-700 dark:text-zinc-300">
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {activity.name ?? "…"}
-                      </span>
-                      {activity.description ? ` — ${activity.description}` : ""}
+                  <li
+                    key={j}
+                    className="flex justify-between gap-3 rounded-[18px] bg-[var(--surface-muted)] p-4 text-sm"
+                  >
+                    <span className="text-[var(--foreground)]">
+                      <span className="font-bold">{activity.name ?? "…"}</span>
+                      {activity.description ? (
+                        <span className="text-[var(--muted)]">
+                          {" "}
+                          — {activity.description}
+                        </span>
+                      ) : null}
                     </span>
                     {typeof activity.approxCostEur === "number" ? (
-                      <span className="shrink-0 text-zinc-500 dark:text-zinc-400">
+                      <span className="shrink-0 font-semibold text-[var(--muted)]">
                         {formatBudget(activity.approxCostEur)}
                       </span>
                     ) : null}
@@ -91,12 +94,12 @@ export function ItineraryView({ itinerary }: { itinerary: PartialItinerary }) {
       </ul>
 
       {typeof itinerary.totalApproxCostEur === "number" ? (
-        <p className="text-right font-medium text-zinc-900 dark:text-zinc-50">
+        <p className="text-right font-bold text-[var(--foreground)]">
           Estimated total: {formatBudget(itinerary.totalApproxCostEur)}
         </p>
       ) : null}
 
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">{DISCLAIMER}</p>
+      <p className="text-xs text-[var(--muted-light)]">{DISCLAIMER}</p>
     </div>
   );
 }
