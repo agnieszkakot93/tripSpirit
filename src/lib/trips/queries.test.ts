@@ -9,6 +9,7 @@ import {
   deleteTrip,
   getTripForUser,
   insertTrip,
+  updateItinerary,
   updateTrip,
 } from "./queries";
 
@@ -144,6 +145,69 @@ describe("updateTrip", () => {
       budgetAmount: 1,
     });
     expect(result).toBeNull();
+  });
+});
+
+describe("updateItinerary", () => {
+  let db: AppDatabase;
+  let sqlite: Database.Database;
+  beforeEach(() => { ({ db, sqlite } = makeDb()); });
+
+  const sampleItinerary = {
+    days: [
+      {
+        day: 1,
+        title: "Day one",
+        activities: [
+          { name: "Museum", description: "Art museum", approxCostEur: 15 },
+        ],
+      },
+    ],
+    totalApproxCostEur: 15,
+  };
+
+  it("updates itinerary_json for the owner and returns true", async () => {
+    seedUser(db, "u1");
+    const created = await seedTrip(db, "u1");
+    sqlite.exec(
+      `UPDATE trips SET itinerary_json = '{"days":[]}' WHERE id = '${created.id}'`,
+    );
+    const result = await updateItinerary(db, "u1", created.id, sampleItinerary);
+    expect(result).toBe(true);
+    const row = await getTripForUser(db, "u1", created.id);
+    expect(JSON.parse(row!.itineraryJson!)).toEqual(sampleItinerary);
+  });
+
+  it("returns false and makes no mutation when user is wrong", async () => {
+    seedUser(db, "u1");
+    seedUser(db, "u2");
+    const created = await seedTrip(db, "u1");
+    sqlite.exec(
+      `UPDATE trips SET itinerary_json = '{"days":[]}' WHERE id = '${created.id}'`,
+    );
+    const result = await updateItinerary(db, "u2", created.id, sampleItinerary);
+    expect(result).toBe(false);
+    const row = await getTripForUser(db, "u1", created.id);
+    expect(row?.itineraryJson).toBe('{"days":[]}');
+  });
+
+  it("returns false for a non-existent trip id", async () => {
+    seedUser(db, "u1");
+    const result = await updateItinerary(db, "u1", "no-such-id", sampleItinerary);
+    expect(result).toBe(false);
+  });
+
+  it("does not clobber other trip fields", async () => {
+    seedUser(db, "u1");
+    const created = await seedTrip(db, "u1");
+    sqlite.exec(
+      `UPDATE trips SET itinerary_json = '{"days":[]}' WHERE id = '${created.id}'`,
+    );
+    await updateItinerary(db, "u1", created.id, sampleItinerary);
+    const row = await getTripForUser(db, "u1", created.id);
+    expect(row?.destination).toBe("Lisbon");
+    expect(row?.durationDays).toBe(5);
+    expect(row?.budgetAmount).toBe(1000);
   });
 });
 

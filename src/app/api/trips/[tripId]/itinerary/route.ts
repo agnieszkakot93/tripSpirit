@@ -6,7 +6,43 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { buildItineraryPrompt, itinerarySchema } from "@/lib/trips/itinerary";
-import { getTripForUser, updateTripItinerary } from "@/lib/trips/queries";
+import { getTripForUser, updateItinerary, updateTripItinerary } from "@/lib/trips/queries";
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ tripId: string }> },
+) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const userId = session.user.id;
+  const { tripId } = await params;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const result = itinerarySchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json({ error: "Invalid itinerary" }, { status: 400 });
+  }
+
+  try {
+    await getCloudflareContext({ async: true });
+    const db = getDb();
+    const updated = await updateItinerary(db, userId, tripId, result.data);
+    if (!updated) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return new NextResponse(null, { status: 204 });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
 
 // Abort below the 30s edge-runtime ceiling so the error surfaces cleanly
 // before the runtime hard-kills the request (PRD 30s NFR; no buffer at the edge).
