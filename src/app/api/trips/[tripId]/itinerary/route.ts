@@ -1,11 +1,16 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { streamObject } from "ai";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { getAppCloudflareContext } from "@/lib/cloudflare-context";
 import { getDb } from "@/lib/db";
-import { buildItineraryPrompt, itinerarySchema } from "@/lib/trips/itinerary";
+import {
+  buildItineraryPrompt,
+  buildItinerarySchemaForDuration,
+  isItineraryCompleteForDuration,
+  itinerarySchema,
+} from "@/lib/trips/itinerary";
 import { getTripForUser, updateItinerary, updateTripItinerary } from "@/lib/trips/queries";
 
 export async function PATCH(
@@ -32,8 +37,7 @@ export async function PATCH(
   }
 
   try {
-    await getCloudflareContext({ async: true });
-    const db = getDb();
+    const db = await getDb();
     const updated = await updateItinerary(db, userId, tripId, result.data);
     if (!updated) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -62,11 +66,11 @@ export async function POST(
   try {
     // Read the key + execution context from the Cloudflare env binding — never
     // process.env (it is not reliably populated on the workerd runtime).
-    const { env, ctx } = await getCloudflareContext({ async: true });
+    const { env, ctx } = await getAppCloudflareContext();
     if (!env.OPENAI_API_KEY) {
       return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
-    const db = getDb();
+    const db = await getDb();
 
     const trip = await getTripForUser(db, userId, tripId);
     // notFound for missing AND wrong-owner — never leak another user's trip.
@@ -83,9 +87,11 @@ export async function POST(
 
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
 
+    const generationSchema = buildItinerarySchemaForDuration(trip.durationDays);
+
     const result = streamObject({
       model: openai("gpt-4o-mini"),
-      schema: itinerarySchema,
+      schema: generationSchema,
       prompt: buildItineraryPrompt({
         destination: trip.destination,
         durationDays: trip.durationDays,
@@ -98,11 +104,20 @@ export async function POST(
         console.error("itinerary generation failed", { tripId, error });
       },
       onFinish: ({ object }) => {
-        // Persist only a complete, schema-valid object (undefined on abort/error).
+        // Persist only a complete object with one day per trip duration.
         // waitUntil keeps the worker alive until the D1 write commits, since this
         // fires after the response stream has begun flushing to the client.
-        if (object) {
+        if (
+          object &&
+          isItineraryCompleteForDuration(object, trip.durationDays)
+        ) {
           ctx.waitUntil(updateTripItinerary(db, userId, tripId, object));
+        } else if (object) {
+          console.error("itinerary generation incomplete", {
+            tripId,
+            expectedDays: trip.durationDays,
+            actualDays: object.days.length,
+          });
         }
       },
     });

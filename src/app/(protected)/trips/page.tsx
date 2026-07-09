@@ -1,5 +1,3 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-
 import { SiteHeader } from "@/components/site-header";
 import { TripCard } from "@/components/trip-card";
 import { TripCreateForm } from "@/components/trip-create-form";
@@ -12,8 +10,7 @@ export default async function TripsPage() {
   const session = await auth();
   const userId = session?.user?.id;
 
-  await getCloudflareContext({ async: true });
-  const trips = userId ? await listTripsForUser(getDb(), userId) : [];
+  const trips = userId ? await listTripsForUser(await getDb(), userId) : [];
 
   return (
     <main className="mx-auto flex min-h-full max-w-2xl flex-col gap-6 px-6 py-16">

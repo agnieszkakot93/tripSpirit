@@ -1,7 +1,7 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ItineraryEditor } from "@/components/itinerary-editor";
 import { ItineraryGenerator } from "@/components/itinerary-generator";
 import { ItineraryView, type PartialItinerary } from "@/components/itinerary-view";
 import { SiteHeader } from "@/components/site-header";
@@ -9,17 +9,23 @@ import { formatBudget, formatDuration } from "@/components/trip-card";
 import { TripActions } from "@/components/trip-actions";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { itinerarySchema } from "@/lib/trips/itinerary";
+import { itinerarySchema, type Itinerary } from "@/lib/trips/itinerary";
 import { getTripForUser } from "@/lib/trips/queries";
 
-function parseItinerary(json: string | null): PartialItinerary | null {
+type ParsedItinerary =
+  | { valid: true; data: Itinerary }
+  | { valid: false; data: PartialItinerary }
+  | null;
+
+function parseItinerary(json: string | null): ParsedItinerary {
   if (!json) return null;
   try {
     const raw = JSON.parse(json);
-    // Prefer the schema-validated shape; fall back to best-effort partial
-    // render for older/odd stored values (the view tolerates partial data).
     const result = itinerarySchema.safeParse(raw);
-    return result.success ? result.data : (raw as PartialItinerary);
+    if (result.success) {
+      return { valid: true, data: result.data };
+    }
+    return { valid: false, data: raw as PartialItinerary };
   } catch {
     return null;
   }
@@ -37,8 +43,7 @@ export default async function TripDetailPage({
   const userId = session?.user?.id;
   if (!userId) notFound();
 
-  await getCloudflareContext({ async: true });
-  const trip = await getTripForUser(getDb(), userId, tripId);
+  const trip = await getTripForUser(await getDb(), userId, tripId);
 
   // notFound() for both missing and wrong-owner so we never leak the
   // existence of another user's trip via a distinct error.
@@ -74,19 +79,22 @@ export default async function TripDetailPage({
       />
 
       {savedItinerary ? (
-        // One-shot: a saved itinerary renders read-only — no Generate button
-        // (no regenerate, per PRD Non-Goals).
         <section className="flex flex-col gap-4">
           <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
             Itinerary
           </h2>
-          {savedItinerary ? (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              This itinerary reflects the trip details at the time it was
-              generated. Editing the trip does not regenerate it.
-            </p>
-          ) : null}
-          <ItineraryView itinerary={savedItinerary} />
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            This itinerary reflects the trip details at the time it was
+            generated. Editing the trip does not regenerate it.
+          </p>
+          {savedItinerary.valid ? (
+            <ItineraryEditor
+              tripId={trip.id}
+              initialItinerary={savedItinerary.data}
+            />
+          ) : (
+            <ItineraryView itinerary={savedItinerary.data} />
+          )}
         </section>
       ) : (
         <ItineraryGenerator tripId={trip.id} />

@@ -1,0 +1,18 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "tripsprint-ai-dev",
+	"compatibility_date": "2026-06-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"vars": {
+		"AUTH_URL": "http://localhost:3000",
+		"AUTH_TRUST_HOST": "true"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "tripsprint-ai-db",
+			"database_id": "4b2e40e5-fa8e-477a-a90c-3b942490e279",
+			"migrations_dir": "./drizzle"
+		}
+	]
+}
