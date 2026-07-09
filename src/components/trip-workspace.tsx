@@ -45,16 +45,16 @@ export function TripWorkspace({
   const withinBudget = totalCost <= budgetAmount;
 
   return (
-    <div className="flex min-h-full flex-col">
-      <div className="relative">
+    <div className="flex h-full flex-col">
+      <div className="relative shrink-0">
         <div
-          className="h-56 bg-cover bg-center"
+          className="h-48 bg-cover bg-center"
           style={{
             backgroundImage: `linear-gradient(to bottom, rgba(24,20,17,0.15), rgba(24,20,17,0.55)), url('${destinationImageUrl(destination)}')`,
           }}
         />
 
-        <div className="absolute inset-x-8 -bottom-16 rounded-[28px] border border-[var(--border-muted)] bg-white p-6 shadow-[0_20px_60px_rgba(49,33,20,0.12)]">
+        <div className="absolute inset-x-6 -bottom-12 rounded-[24px] border border-[var(--border-muted)] bg-white p-5 shadow-[0_16px_48px_rgba(49,33,20,0.1)]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export function TripWorkspace({
         </div>
       </div>
 
-      <div className="mt-24 flex flex-1 flex-col px-8 pb-8">
+      <div className="mt-20 flex flex-1 flex-col px-6 pb-6">
         <div className="flex gap-6 border-b border-[var(--border-muted)]">
           {(["itinerary", "overview"] as const).map((t) => (
             <button

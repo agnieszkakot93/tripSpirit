@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ItineraryView } from "@/components/itinerary-view";
+import { Loader } from "@/components/loader";
 import { itinerarySchema } from "@/lib/trips/itinerary";
 
 export function ItineraryGenerator({ tripId }: { tripId: string }) {
@@ -54,12 +55,15 @@ export function ItineraryGenerator({ tripId }: { tripId: string }) {
       ) : null}
 
       {isLoading ? (
-        <div className="rounded-[28px] border border-[var(--border-muted)] bg-white p-8 text-center">
-          <p className="text-sm font-semibold text-[var(--foreground)]">
-            Generating your itinerary…
-          </p>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            This usually takes 15–30 seconds.
+        <div className="rounded-[28px] border border-[var(--border-muted)] bg-white px-8 py-14">
+          <Loader
+            size="lg"
+            label="Generating your itinerary…"
+            className="mx-auto"
+          />
+          <p className="mx-auto mt-4 max-w-sm text-center text-sm text-[var(--muted)]">
+            AI is planning activities and costs for each day. This usually takes
+            15–30 seconds.
           </p>
         </div>
       ) : null}

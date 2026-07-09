@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { PlusIcon } from "@/components/icons";
+import { LoaderInline } from "@/components/loader";
 
 type TripCreateModalProps = {
   open: boolean;
@@ -163,7 +164,7 @@ export function TripCreateModal({ open, onClose }: TripCreateModalProps) {
               disabled={pending}
               className="btn-primary flex-1"
             >
-              {pending ? "Creating…" : "Create trip"}
+              {pending ? <LoaderInline label="Creating…" /> : "Create trip"}
             </button>
           </div>
         </form>

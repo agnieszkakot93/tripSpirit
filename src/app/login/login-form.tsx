@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { useState, type FormEvent } from "react";
 
 import { MapPinIcon } from "@/components/icons";
+import { LoaderInline } from "@/components/loader";
 
 export function LoginForm() {
   const router = useRouter();
@@ -297,11 +298,17 @@ export function LoginForm() {
               disabled={pending}
               className="btn-primary mt-2 w-full"
             >
-              {pending
-                ? "Please wait…"
-                : mode === "register"
-                  ? "Create account"
-                  : "Sign in"}
+              {pending ? (
+                <LoaderInline
+                  label={
+                    mode === "register" ? "Creating account…" : "Signing in…"
+                  }
+                />
+              ) : mode === "register" ? (
+                "Create account"
+              ) : (
+                "Sign in"
+              )}
             </button>
           </form>
         )}

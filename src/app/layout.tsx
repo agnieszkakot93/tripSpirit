@@ -25,7 +25,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="h-full overflow-hidden">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

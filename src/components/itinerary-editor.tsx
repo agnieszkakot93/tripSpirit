@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 
 import { ChevronIcon, TrashIcon } from "@/components/icons";
+import { LoaderInline } from "@/components/loader";
 import {
   dayCost,
   DISCLAIMER,
@@ -261,7 +262,7 @@ export function ItineraryEditor({
       {dirty ? (
         <div className="sticky bottom-4 flex justify-end">
           <button type="submit" disabled={pending} className="btn-primary px-8">
-            {pending ? "Saving…" : "Save changes"}
+            {pending ? <LoaderInline label="Saving…" /> : "Save changes"}
           </button>
         </div>
       ) : null}

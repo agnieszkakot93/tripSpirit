@@ -28,7 +28,7 @@ export function NavSidebar({ userEmail }: NavSidebarProps) {
 
   return (
     <>
-      <aside className="flex h-full w-[240px] shrink-0 flex-col justify-between bg-[var(--sidebar)] p-6 text-white max-md:h-auto max-md:w-full max-md:rounded-b-[28px]">
+      <aside className="flex h-screen w-[240px] shrink-0 flex-col justify-between overflow-y-auto bg-[var(--sidebar)] p-6 text-white">
         <div>
           <Link href="/trips" className="flex items-center gap-2.5 no-underline">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)]">

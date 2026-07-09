@@ -14,10 +14,10 @@ type AppShellProps = {
 
 export function AppShell({ userEmail, trips, children }: AppShellProps) {
   return (
-    <div className="flex min-h-screen max-md:flex-col">
+    <div className="flex h-screen overflow-hidden bg-[var(--background)]">
       <NavSidebar userEmail={userEmail} />
       <TripListPanel trips={trips} />
-      <main className="min-h-0 min-w-0 flex-1 overflow-auto bg-[var(--background)] max-md:min-h-[60vh]">
+      <main className="min-w-0 flex-1 overflow-y-auto bg-[var(--background)]">
         {children}
       </main>
     </div>
