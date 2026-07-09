@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-
-import { BellIcon, ChevronDownIcon } from "@/components/icons";
+import { BellIcon } from "@/components/icons";
 
 type TripsHeaderProps = {
   userName?: string | null;
@@ -43,18 +41,14 @@ export function TripsHeader({ userName, userEmail }: TripsHeaderProps) {
           <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--primary)] ring-2 ring-white" />
         </button>
 
-        <Link
-          href="/profile"
-          className="flex items-center gap-2.5 rounded-2xl border border-[var(--border-muted)] bg-white py-1.5 pl-1.5 pr-3 no-underline transition-colors hover:border-[var(--border)]"
-        >
+        <div className="flex items-center gap-2.5 rounded-2xl border border-[var(--border-muted)] bg-white py-1.5 pl-1.5 pr-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff9a5c] to-[#ff7a3d] text-xs font-black text-white">
             {initials(name)}
           </span>
           <span className="text-sm font-bold text-[var(--foreground)]">
             {name}
           </span>
-          <ChevronDownIcon className="text-[var(--muted-light)]" />
-        </Link>
+        </div>
       </div>
     </header>
   );

@@ -27,8 +27,8 @@ export function TripsMainArea({
 
   if (!isTrips) {
     return (
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <main className="flex-1 overflow-y-auto bg-[var(--background)]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[var(--background)]">
           {children}
         </main>
       </div>
@@ -36,11 +36,13 @@ export function TripsMainArea({
   }
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--background)]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--background)]">
       <TripsHeader userName={userName} userEmail={userEmail} />
       <div className="flex min-h-0 flex-1">
         <TripListPanel trips={trips} />
-        <main className="min-w-0 flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

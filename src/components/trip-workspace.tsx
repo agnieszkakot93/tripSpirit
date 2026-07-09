@@ -45,8 +45,8 @@ export function TripWorkspace({
   const withinBudget = totalCost <= budgetAmount;
 
   return (
-    <div className="flex h-full flex-col rounded-[28px] border border-[var(--border-muted)] bg-white overflow-hidden shadow-[0_4px_24px_rgba(49,33,20,0.04)]">
-      <div className="relative shrink-0">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-[var(--border-muted)] bg-white shadow-[0_4px_24px_rgba(49,33,20,0.04)]">
+      <div className="relative shrink-0 pb-12">
         <div
           className="h-48 bg-cover bg-center"
           style={{
@@ -54,7 +54,7 @@ export function TripWorkspace({
           }}
         />
 
-        <div className="absolute inset-x-6 -bottom-12 rounded-[24px] border border-[var(--border-muted)] bg-white p-5 shadow-[0_16px_48px_rgba(49,33,20,0.1)]">
+        <div className="absolute inset-x-6 -bottom-10 rounded-[24px] border border-[var(--border-muted)] bg-white p-5 shadow-[0_16px_48px_rgba(49,33,20,0.1)]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -72,14 +72,14 @@ export function TripWorkspace({
         </div>
       </div>
 
-      <div className="mt-20 flex flex-1 flex-col px-6 pb-6">
-        <div className="flex gap-6 border-b border-[var(--border-muted)]">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex shrink-0 gap-6 border-b border-[var(--border-muted)] px-6">
           {(["itinerary", "overview"] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className={`border-b-2 pb-3 text-sm font-bold capitalize transition-colors ${
+              className={`border-b-2 pb-3 pt-2 text-sm font-bold capitalize transition-colors ${
                 tab === t
                   ? "border-[var(--primary)] text-[var(--foreground)]"
                   : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -90,7 +90,7 @@ export function TripWorkspace({
           ))}
         </div>
 
-        <div className="mt-6 flex-1">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
           {tab === "itinerary" ? (
             savedItinerary ? (
               savedItinerary.valid ? (
@@ -115,7 +115,7 @@ export function TripWorkspace({
       </div>
 
       {itinerary ? (
-        <footer className="sticky bottom-0 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--border-muted)] bg-white/95 px-8 py-4 backdrop-blur">
+        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-[var(--border-muted)] bg-white px-6 py-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-[var(--muted)]">
               Total estimated cost{" "}
@@ -125,13 +125,9 @@ export function TripWorkspace({
               / {formatBudget(budgetAmount)}
             </span>
             {withinBudget ? (
-              <span className="badge-success">
-                Within budget
-              </span>
+              <span className="badge-success">Within budget</span>
             ) : (
-              <span className="badge-warning">
-                Over budget
-              </span>
+              <span className="badge-warning">Over budget</span>
             )}
           </div>
         </footer>

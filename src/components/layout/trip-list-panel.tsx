@@ -5,8 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 
 import {
-  ArchiveIcon,
-  FilterIcon,
   MoreIcon,
   SearchIcon,
 } from "@/components/icons";
@@ -135,12 +133,9 @@ type TripListPanelProps = {
   trips: TripListItem[];
 };
 
-type SortMode = "recent" | "name";
-
 export function TripListPanel({ trips }: TripListPanelProps) {
   const pathname = usePathname();
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<SortMode>("recent");
 
   const activeId = pathname.startsWith("/trips/")
     ? pathname.split("/")[2]
@@ -148,49 +143,25 @@ export function TripListPanel({ trips }: TripListPanelProps) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = q
-      ? trips.filter((t) => t.destination.toLowerCase().includes(q))
-      : [...trips];
-
-    if (sort === "name") {
-      list = list.sort((a, b) =>
-        a.destination.localeCompare(b.destination),
-      );
-    }
-
-    return list;
-  }, [trips, query, sort]);
+    if (!q) return trips;
+    return trips.filter((t) =>
+      t.destination.toLowerCase().includes(q),
+    );
+  }, [trips, query]);
 
   return (
-    <section className="flex h-full w-[340px] shrink-0 flex-col border-r border-[var(--border-muted)] bg-[var(--background)]">
+    <section className="flex h-full min-h-0 w-[340px] shrink-0 flex-col border-r border-[var(--border-muted)] bg-[var(--background)]">
       <div className="shrink-0 px-4 pt-4">
-        <div className="flex gap-2">
-          <div className="relative min-w-0 flex-1">
-            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--muted-light)]" />
-            <input
-              type="search"
-              placeholder="Search trips..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="field-input w-full bg-white py-2.5 pl-10 text-sm"
-            />
-          </div>
-          <button
-            type="button"
-            className={`flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-2xl border bg-white transition-colors ${
-              sort === "name"
-                ? "border-[var(--primary)] text-[var(--primary)]"
-                : "border-[var(--border-muted)] text-[var(--muted)] hover:border-[var(--border)]"
-            }`}
-            onClick={() =>
-              setSort((s) => (s === "recent" ? "name" : "recent"))
-            }
-            aria-label="Sort trips"
-            title={sort === "recent" ? "Sorted by recent" : "Sorted by name"}
-          >
-            <FilterIcon />
-          </button>
-        </div>
+        <label className="search-field">
+          <SearchIcon className="search-field-icon" />
+          <input
+            type="search"
+            placeholder="Search trips..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="search-field-input"
+          />
+        </label>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4">
@@ -209,18 +180,6 @@ export function TripListPanel({ trips }: TripListPanelProps) {
             ))}
           </ul>
         )}
-      </div>
-
-      <div className="shrink-0 border-t border-[var(--border-muted)] p-4">
-        <button
-          type="button"
-          disabled
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--border-muted)] bg-white px-4 py-3 text-sm font-semibold text-[var(--muted-light)]"
-          title="Coming soon"
-        >
-          <ArchiveIcon />
-          View archived trips
-        </button>
       </div>
     </section>
   );
