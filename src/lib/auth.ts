@@ -11,6 +11,7 @@ import { verifyPassword } from "@/lib/password";
 export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
   const { env } = await getAppCloudflareContext();
   return {
+    secret: env.AUTH_SECRET,
     adapter: D1Adapter(env.DB),
     session: { strategy: "jwt" },
     trustHost: true,
