@@ -96,6 +96,28 @@ export async function deleteTrip(
 }
 
 /**
+ * Overwrite an existing itinerary for editing (FR-011/FR-012). No IS NULL guard —
+ * this is the edit path, not generation. Returns true if the row was updated,
+ * false if the trip was not found or not owned by the caller.
+ */
+export async function updateItinerary(
+  db: AppDatabase,
+  userId: string,
+  tripId: string,
+  itinerary: Itinerary,
+): Promise<boolean> {
+  const rows = await db
+    .update(trips)
+    .set({
+      itineraryJson: JSON.stringify(itinerary),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(trips.id, tripId), eq(trips.userId, userId)))
+    .returning({ id: trips.id });
+  return rows.length > 0;
+}
+
+/**
  * Persist a generated itinerary, scoped to the owner and idempotent: the write
  * only lands when `itinerary_json IS NULL`, so a one-shot generation can never
  * overwrite an existing itinerary (S-03 has no regenerate). Returns true if a

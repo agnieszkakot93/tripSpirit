@@ -1,15 +1,15 @@
 import { D1Adapter } from "@auth/d1-adapter";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq } from "drizzle-orm";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
 import { users } from "@/db/schema";
+import { getAppCloudflareContext } from "@/lib/cloudflare-context";
 import { getDb } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 
 export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
-  const { env } = await getCloudflareContext({ async: true });
+  const { env } = await getAppCloudflareContext();
   return {
     adapter: D1Adapter(env.DB),
     session: { strategy: "jwt" },
@@ -34,7 +34,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(async () => {
             return null;
           }
           const email = rawEmail.trim().toLowerCase();
-          const db = getDb();
+          const db = await getDb();
           const [user] = await db
             .select()
             .from(users)

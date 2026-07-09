@@ -1,4 +1,3 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -13,8 +12,7 @@ export async function GET() {
   }
 
   try {
-    await getCloudflareContext({ async: true });
-    const db = getDb();
+    const db = await getDb();
     const trips = await listTripsForUser(db, session.user.id);
     return NextResponse.json(trips);
   } catch {
@@ -41,8 +39,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await getCloudflareContext({ async: true });
-    const db = getDb();
+    const db = await getDb();
     const trip = await insertTrip(db, session.user.id, result.values);
     return NextResponse.json(trip, { status: 201 });
   } catch {

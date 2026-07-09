@@ -1,4 +1,3 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
@@ -18,8 +17,7 @@ export async function GET(
   const { tripId } = await params;
 
   try {
-    await getCloudflareContext({ async: true });
-    const db = getDb();
+    const db = await getDb();
     const trip = await getTripForUser(db, session.user.id, tripId);
 
     if (!trip) {
@@ -56,8 +54,7 @@ export async function PATCH(
   const { tripId } = await params;
 
   try {
-    await getCloudflareContext({ async: true });
-    const db = getDb();
+    const db = await getDb();
     const trip = await updateTrip(db, session.user.id, tripId, result.values);
 
     if (!trip) {
@@ -82,8 +79,7 @@ export async function DELETE(
   const { tripId } = await params;
 
   try {
-    await getCloudflareContext({ async: true });
-    const db = getDb();
+    const db = await getDb();
     const deleted = await deleteTrip(db, session.user.id, tripId);
 
     if (!deleted) {

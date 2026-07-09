@@ -26,11 +26,31 @@ export const itineraryDaySchema = z.object({
 });
 
 export const itinerarySchema = z.object({
-  days: z.array(itineraryDaySchema),
+  days: z.array(itineraryDaySchema).min(1),
   totalApproxCostEur: z
     .number()
     .describe("Approximate total cost for the whole trip in whole EUR"),
 });
+
+/** Generation-only schema: the model must return exactly one day per trip duration. */
+export function buildItinerarySchemaForDuration(durationDays: number) {
+  return itinerarySchema.extend({
+    days: z
+      .array(itineraryDaySchema)
+      .length(durationDays)
+      .describe(
+        `Exactly ${durationDays} days, numbered 1 through ${durationDays}`,
+      ),
+  });
+}
+
+export function isItineraryCompleteForDuration(
+  itinerary: Itinerary,
+  durationDays: number,
+): boolean {
+  if (itinerary.days.length !== durationDays) return false;
+  return itinerary.days.every((day, index) => day.day === index + 1);
+}
 
 export type ItineraryActivity = z.infer<typeof itineraryActivitySchema>;
 export type ItineraryDay = z.infer<typeof itineraryDaySchema>;
@@ -49,6 +69,7 @@ export function buildItineraryPrompt(input: {
   const { destination, durationDays, budgetAmount } = input;
   return [
     `Plan a ${durationDays}-day city-break itinerary for ${destination}.`,
+    `The itinerary MUST contain exactly ${durationDays} days, numbered 1 through ${durationDays} — no fewer and no more.`,
     `Aim to keep the trip roughly within a budget of about €${budgetAmount} as a planning guideline — not a strict limit; sensible suggestions that modestly exceed it are fine.`,
     `For each day, provide a short thematic title and 2 to 4 activities. Each activity needs a brief description and an approximate per-person cost in whole euros (use 0 for free activities).`,
     `Vary the activities across the days and order them sensibly within each day. Provide an approximate total cost for the whole trip.`,

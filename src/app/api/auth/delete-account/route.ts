@@ -1,4 +1,3 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -20,8 +19,7 @@ export async function DELETE(request: Request) {
 
   const email = emailRaw.trim().toLowerCase();
 
-  await getCloudflareContext({ async: true });
-  const db = getDb();
+  const db = await getDb();
 
   const [existing] = await db
     .select({ id: users.id })

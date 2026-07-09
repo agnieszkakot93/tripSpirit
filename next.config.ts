@@ -1,9 +1,12 @@
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
 
-void import("@opennextjs/cloudflare").then((m) => m.initOpenNextCloudflareForDev());
+// Minimal wrangler.dev.jsonc — avoids production worker service bindings that
+// cause "Failed to get handler to worker" noise during local next dev.
+void initOpenNextCloudflareForDev({ configPath: "./wrangler.dev.jsonc" });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ["wrangler"],
 };
 
 export default nextConfig;

@@ -1,4 +1,3 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -42,8 +41,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await getCloudflareContext({ async: true });
-  const db = getDb();
+  const db = await getDb();
 
   const [existing] = await db
     .select({ id: users.id })
