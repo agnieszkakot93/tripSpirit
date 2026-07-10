@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useState, type FormEvent } from "react";
 
 import { UserIcon } from "@/components/icons";
@@ -13,31 +14,29 @@ type ProfileFormProps = {
 export function ProfileForm({ email, name }: ProfileFormProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(name ?? "");
-  const [confirmEmail, setConfirmEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [deleteMode, setDeleteMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function handleDelete(e: FormEvent) {
     e.preventDefault();
-    if (confirmEmail.trim().toLowerCase() !== email.trim().toLowerCase()) {
-      setError("Emails do not match");
-      return;
-    }
     setError(null);
     setPending(true);
     try {
       const res = await fetch("/api/auth/delete-account", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ password }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         setError(data.error ?? "Could not delete account");
         return;
       }
-      router.push("/login?mode=register");
+      // JWT sessions survive the deleted D1 row — clear the cookie client-side.
+      await signOut({ redirect: false });
+      router.push("/login?deleted=1");
       router.refresh();
     } finally {
       setPending(false);
@@ -114,15 +113,19 @@ export function ProfileForm({ email, name }: ProfileFormProps) {
           <form className="grid gap-4" onSubmit={handleDelete}>
             <p className="alert-warning">
               This permanently deletes your account and all saved trips. There
-              is no undo.
+              is no undo. Trip data sent to our AI provider during itinerary
+              generation cannot be recalled from their systems.
             </p>
             <label className="grid gap-1.5 text-sm">
-              <span className="font-semibold">Type your email to confirm</span>
+              <span className="font-semibold">
+                Enter your password to confirm
+              </span>
               <input
-                type="email"
+                type="password"
                 required
-                value={confirmEmail}
-                onChange={(e) => setConfirmEmail(e.target.value)}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="field-input"
               />
             </label>
