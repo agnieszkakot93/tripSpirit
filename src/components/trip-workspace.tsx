@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 import { BudgetOverview } from "@/components/budget-overview";
-import { PencilIcon } from "@/components/icons";
 import { ItineraryEditor } from "@/components/itinerary-editor";
 import { ItineraryGenerator } from "@/components/itinerary-generator";
+import { TripActions } from "@/components/trip-actions";
 import {
   ItineraryView,
   tripTotalCost,
@@ -55,18 +55,21 @@ export function TripWorkspace({
         />
 
         <div className="absolute inset-x-6 -bottom-10 rounded-[24px] border border-[var(--border-muted)] bg-white p-5 shadow-[0_16px_48px_rgba(49,33,20,0.1)]">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-black tracking-tight text-[var(--foreground)]">
-                  {destination}
-                </h1>
-                <PencilIcon className="text-[var(--muted-light)]" />
-              </div>
-              <p className="mt-2 text-[var(--muted)]">
-                {formatDuration(durationDays)} · Budget{" "}
-                {formatBudget(budgetAmount)}
-              </p>
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-[var(--foreground)]">
+              {destination}
+            </h1>
+            <p className="mt-2 text-[var(--muted)]">
+              {formatDuration(durationDays)} · Budget {formatBudget(budgetAmount)}
+            </p>
+            <div className="mt-4">
+              <TripActions
+                id={tripId}
+                destination={destination}
+                durationDays={durationDays}
+                budgetAmount={budgetAmount}
+                hasItinerary={savedItinerary !== null}
+              />
             </div>
           </div>
         </div>

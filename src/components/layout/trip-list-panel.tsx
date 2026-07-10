@@ -14,6 +14,7 @@ import {
   formatDuration,
   formatRelativeTime,
 } from "@/lib/format";
+import { tripDeleteConfirmMessage } from "@/lib/trips/messages";
 
 export type TripListItem = {
   id: string;
@@ -32,24 +33,32 @@ function TripCard({ trip, active }: TripCardProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   async function handleDelete(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
     setMenuOpen(false);
+    setError(null);
 
-    const confirmed = window.confirm(
-      `Delete "${trip.destination}"? This cannot be undone.`,
-    );
+    const confirmed = window.confirm(tripDeleteConfirmMessage(trip.destination));
     if (!confirmed) return;
 
     setDeleting(true);
     try {
       const res = await fetch(`/api/trips/${trip.id}`, { method: "DELETE" });
-      if (!res.ok) return;
-      router.push("/trips");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "Could not delete trip");
+        return;
+      }
+      if (active) {
+        router.push("/trips");
+      }
       router.refresh();
+    } catch {
+      setError("Network error — please try again");
     } finally {
       setDeleting(false);
     }
@@ -85,6 +94,11 @@ function TripCard({ trip, active }: TripCardProps) {
         >
           Updated {formatRelativeTime(trip.updatedAt)}
         </span>
+        {error ? (
+          <span className="mt-1 block text-[11px] font-medium text-red-600" role="alert">
+            {error}
+          </span>
+        ) : null}
       </div>
 
       <div className="absolute right-2 top-2" ref={menuRef}>
