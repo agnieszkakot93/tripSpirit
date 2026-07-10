@@ -449,25 +449,25 @@ infrastructure-only (wrangler config + production domain onboarding).
 
 #### Automated
 
-- [x] 2.1 `npx tsc --noEmit` passes
-- [x] 2.2 `npm run lint` passes
-- [x] 2.3 `npm run build` passes
+- [x] 2.1 `npx tsc --noEmit` passes — eee1df6
+- [x] 2.2 `npm run lint` passes — eee1df6
+- [x] 2.3 `npm run build` passes — eee1df6
 
 #### Manual
 
-- [x] 2.4 Forgot-password creates token and sends/logs reset URL; reset-password updates hash; no email enumeration
+- [x] 2.4 Forgot-password creates token and sends/logs reset URL; reset-password updates hash; no email enumeration — eee1df6
 
 ### Phase 3: Password Reset UI
 
 #### Automated
 
-- [ ] 3.1 `npx tsc --noEmit` passes
-- [ ] 3.2 `npm run lint` passes
-- [ ] 3.3 `npm run build` passes
+- [x] 3.1 `npx tsc --noEmit` passes
+- [x] 3.2 `npm run lint` passes
+- [x] 3.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 3.4 Full forgot-password → reset-password → sign-in flow works; no delete-account UI remains on login
+- [x] 3.4 Full forgot-password → reset-password → sign-in flow works; no delete-account UI remains on login
 
 ### Phase 4: End-to-End Verification
 

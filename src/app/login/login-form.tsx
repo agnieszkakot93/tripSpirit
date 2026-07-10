@@ -23,10 +23,33 @@ export function LoginForm() {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   function switchMode(next: "signin" | "register" | "forgot") {
     setMode(next);
     setError(null);
+    setForgotSent(false);
+  }
+
+  async function handleForgotPassword(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setPending(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "Could not send reset link");
+        return;
+      }
+      setForgotSent(true);
+    } finally {
+      setPending(false);
+    }
   }
 
   async function handleRegister(e: FormEvent) {
@@ -109,7 +132,7 @@ export function LoginForm() {
           {mode === "register"
             ? "Create a trip, generate a day-by-day itinerary, then customize every day, activity, and cost."
             : mode === "forgot"
-              ? "Password reset is coming soon."
+              ? "Enter your email and we'll send you a link to set a new password."
               : "Plan smarter city breaks with AI-assisted itineraries."}
         </p>
 
@@ -153,16 +176,51 @@ export function LoginForm() {
         ) : null}
 
         {mode === "forgot" ? (
-          <div className="mt-6 grid gap-4">
-            <p className="alert-warning">Password reset coming soon.</p>
-            <button
-              type="button"
-              onClick={() => switchMode("signin")}
-              className="btn-ghost text-sm text-[var(--muted)]"
-            >
-              Back to sign in
-            </button>
-          </div>
+          forgotSent ? (
+            <div className="mt-6 grid gap-4">
+              <p className="alert-success">
+                If an account exists for that email, we&apos;ve sent a reset
+                link.
+              </p>
+              <button
+                type="button"
+                onClick={() => switchMode("signin")}
+                className="btn-ghost text-sm text-[var(--muted)]"
+              >
+                Back to sign in
+              </button>
+            </div>
+          ) : (
+            <form className="mt-6 grid gap-4" onSubmit={handleForgotPassword}>
+              <input
+                type="email"
+                required
+                placeholder="Email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="field-input"
+              />
+              <button
+                type="submit"
+                disabled={pending}
+                className="btn-primary w-full"
+              >
+                {pending ? (
+                  <LoaderInline label="Sending reset link…" />
+                ) : (
+                  "Send reset link"
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => switchMode("signin")}
+                className="btn-ghost text-sm text-[var(--muted)]"
+              >
+                Back to sign in
+              </button>
+            </form>
+          )
         ) : (
           <form
             className="mt-6 grid gap-3"
