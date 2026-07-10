@@ -51,9 +51,12 @@ AUTH_SECRET=<run: openssl rand -hex 32>
 AUTH_URL=http://localhost:3000
 AUTH_TRUST_HOST=true
 OPENAI_API_KEY=sk-...
+RESEND_API_KEY=re_...
 ```
 
 Restart the dev server after changing `.dev.vars`.
+
+**Password reset emails** use [Resend](https://resend.com). Without `RESEND_API_KEY`, forgot-password still returns success but only logs the reset link to the dev server console. With a Resend API key, `onboarding@resend.dev` can send to addresses you verify in the Resend dashboard (fine for local testing).
 
 ### Start the dev server
 
@@ -104,8 +107,11 @@ Set Worker secrets (one-time, or to rotate):
 ```bash
 npx wrangler secret put AUTH_SECRET
 npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put RESEND_API_KEY     # from resend.com — required for password-reset emails
 npx wrangler secret put AUTH_TRUST_HOST   # value: true
 ```
+
+Password-reset email uses Resend (`RESEND_API_KEY`). The default `EMAIL_FROM` in `wrangler.jsonc` is Resend's test sender; for production, verify your own domain in Resend and update `EMAIL_FROM` to e.g. `TripSprint AI <noreply@yourdomain.com>`. Cloudflare Email Sending (`send_email` binding) is supported as a fallback if you onboard a sending domain via `npx wrangler email sending enable <domain>`.
 
 Apply remote D1 migrations before or as part of your deploy pipeline:
 

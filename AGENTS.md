@@ -37,8 +37,11 @@ Where each secret lives by environment:
 **Set/rotate a production secret** (write-only; not readable after creation, run again to rotate — no downtime):
 ```bash
 npx wrangler secret put OPENAI_API_KEY
+npx wrangler secret put RESEND_API_KEY
 ```
 Or: Cloudflare dashboard → Workers & Pages → project → Settings → Variables & Secrets → add as a **Secret** (not plaintext). `.dev.vars` is local-only and never deploys — provisioning the production secret is a separate, required step.
+
+Password-reset emails require `RESEND_API_KEY` (see [resend.com](https://resend.com)). Without it, forgot-password only logs the reset URL to the worker console. Default `EMAIL_FROM` uses Resend's test sender (`onboarding@resend.dev`), which only delivers to addresses verified in your Resend account.
 
 Notes:
 - Never paste a real key into chat, commit it, or log it. If one is exposed, **revoke it in the provider dashboard** — deleting the local copy does not invalidate it.

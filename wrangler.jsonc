@@ -17,7 +17,9 @@
 	"vars": {
 		"AUTH_URL": "https://tripsprint-ai.agnieszkakot22.workers.dev",
 		"AUTH_TRUST_HOST": "true",
-		"EMAIL_FROM": "noreply@tripsprint-ai.agnieszkakot22.workers.dev"
+		// Resend test sender — replace with a verified domain sender in production.
+		// Requires RESEND_API_KEY worker secret (see README).
+		"EMAIL_FROM": "TripSprint AI <onboarding@resend.dev>"
 	},
 	// Cloudflare Email Sending. The sending domain must be onboarded once via
 	// `npx wrangler email sending enable <domain>`. Absent in local dev — see

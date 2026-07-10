@@ -42,7 +42,8 @@ export async function POST(request: Request) {
       await sendPasswordResetEmail(env, { to: email, resetUrl });
     }
   } catch (err) {
-    console.error("forgot-password: token/email delivery failed", err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("forgot-password: token/email delivery failed:", message);
   }
 
   return NextResponse.json({ ok: true });
