@@ -1,0 +1,16 @@
+---
+change_id: s-01
+title: Auth shell: landing page, sign-up / sign-in / sign-out, full route protection
+status: impl_reviewed
+created: 2026-06-09
+updated: 2026-06-11
+archived_at: null
+---
+
+## Notes
+
+Roadmap slice S-01 (`auth-shell`). Outcome: user can land on the public landing page, sign up, sign in, sign out, and be redirected to sign-in when accessing any protected route without a session.
+
+PRD refs: FR-001, FR-002, FR-003, FR-013, FR-014, US-03. Prerequisites: none. Status in roadmap: ready.
+
+Auth infrastructure is already present (Auth.js v5 + Credentials + D1 adapter; partial route guard for `/trips` in `src/proxy.ts`). This change completes the shell: build the landing page at `/`, wire sign-up and sign-in UI, extend route protection from `/trips` only to all protected routes. Verify the credentials flow under `npm run preview:cf` before marking done — Cloudflare edge runtime differences are the primary risk. No downstream slice should start until this is closed.

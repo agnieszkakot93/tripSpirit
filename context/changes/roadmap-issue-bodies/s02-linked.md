@@ -1,0 +1,20 @@
+**Depends on:** #1 (S-01: auth)
+
+### S-02: User can create a trip and see their saved trips
+
+- **Outcome:** user can submit a trip form (destination city, duration, budget) and see the resulting trip in a list; can open a saved trip
+- **Change ID:** `trip-creation-and-list`
+- **PRD refs:** FR-004, FR-005, FR-006
+- **Prerequisites:** S-01
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - What does the trip card in the list show — destination only, or also duration and budget? — Owner: user. Block: no.
+- **Risk:** The `trips` table exists in the schema, but no trip API routes are wired yet. This slice introduces all trip CRUD routes. Sequenced before generation because the generation route (S-03) needs a `tripId` to attach the itinerary to; skipping this creates an unplannable dependency.
+- **Status:** proposed
+
+**Backlog handoff:** Run `/10x-plan trip-creation-and-list` (after S-01).
+
+---
+
+Source: `context/foundation/roadmap.md` (updated 2026-06-09)

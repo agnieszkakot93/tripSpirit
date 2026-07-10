@@ -10,6 +10,7 @@ import {
   PlusIcon,
   SignOutIcon,
   SuitcaseIcon,
+  UserIcon,
 } from "@/components/icons";
 import { TripCreateModal } from "@/components/trip-create-modal";
 
@@ -23,6 +24,8 @@ export function NavSidebar({ userEmail }: NavSidebarProps) {
 
   const isTrips =
     pathname === "/trips" || pathname.startsWith("/trips/");
+  const isProfile =
+    pathname === "/profile" || pathname.startsWith("/profile/");
 
   return (
     <>
@@ -57,6 +60,17 @@ export function NavSidebar({ userEmail }: NavSidebarProps) {
             >
               <SuitcaseIcon />
               My trips
+            </Link>
+            <Link
+              href="/profile"
+              className={`flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-semibold no-underline transition-colors ${
+                isProfile
+                  ? "bg-white/12 text-white"
+                  : "text-white/65 hover:bg-white/6 hover:text-white"
+              }`}
+            >
+              <UserIcon />
+              Profile
             </Link>
             <button
               type="button"

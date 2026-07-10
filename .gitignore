@@ -58,9 +58,6 @@ next-env.d.ts
 # Local MCP config
 .mcp.json
 
-# Project context / planning docs
-context/
-
 # Stray copy/backup files
 *\ copy.*
 *.scaffold
