@@ -436,26 +436,26 @@ infrastructure-only (wrangler config + production domain onboarding).
 
 #### Automated
 
-- [x] 1.1 `npx tsc --noEmit` passes
-- [x] 1.2 `npm run lint` passes
-- [x] 1.3 `npm run build` passes
+- [x] 1.1 `npx tsc --noEmit` passes — 30c2bf9
+- [x] 1.2 `npm run lint` passes — 30c2bf9
+- [x] 1.3 `npm run build` passes — 30c2bf9
 
 #### Manual
 
-- [x] 1.4 Unauthenticated delete returns 401; authenticated delete with password removes user + trips and clears session
-- [x] 1.5 Profile nav link, OpenAI disclosure, and deleted banner verified
+- [x] 1.4 Unauthenticated delete returns 401; authenticated delete with password removes user + trips and clears session — 30c2bf9
+- [x] 1.5 Profile nav link, OpenAI disclosure, and deleted banner verified — 30c2bf9
 
 ### Phase 2: Password Reset Backend
 
 #### Automated
 
-- [ ] 2.1 `npx tsc --noEmit` passes
-- [ ] 2.2 `npm run lint` passes
-- [ ] 2.3 `npm run build` passes
+- [x] 2.1 `npx tsc --noEmit` passes
+- [x] 2.2 `npm run lint` passes
+- [x] 2.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 2.4 Forgot-password creates token and sends/logs reset URL; reset-password updates hash; no email enumeration
+- [x] 2.4 Forgot-password creates token and sends/logs reset URL; reset-password updates hash; no email enumeration
 
 ### Phase 3: Password Reset UI
 

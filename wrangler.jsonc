@@ -16,8 +16,13 @@
 	],
 	"vars": {
 		"AUTH_URL": "https://tripsprint-ai.agnieszkakot22.workers.dev",
-		"AUTH_TRUST_HOST": "true"
+		"AUTH_TRUST_HOST": "true",
+		"EMAIL_FROM": "noreply@tripsprint-ai.agnieszkakot22.workers.dev"
 	},
+	// Cloudflare Email Sending. The sending domain must be onboarded once via
+	// `npx wrangler email sending enable <domain>`. Absent in local dev — see
+	// src/lib/email.ts for the console fallback.
+	"send_email": [{ "name": "EMAIL" }],
 	"d1_databases": [
 		{
 			"binding": "DB",

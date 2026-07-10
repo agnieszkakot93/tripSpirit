@@ -13,6 +13,10 @@ declare namespace Cloudflare {
 		AUTH_TRUST_HOST: string;
 		OPENAI_API_KEY: string;
 		WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
+		// Cloudflare Email Sending. Optional: absent in local dev (no send_email
+		// binding in wrangler.dev.jsonc) — src/lib/email.ts falls back to console.
+		EMAIL?: SendEmail;
+		EMAIL_FROM?: string;
 	}
 }
 interface CloudflareEnv extends Cloudflare.Env {}
