@@ -6,7 +6,7 @@ AI-assisted city-break planner. Sign in, create a trip (destination, duration, b
 
 ## Features
 
-- Email/password auth (sign up, sign in, sign out)
+- Email/password auth (sign up, sign in, sign out, password reset via email link, and GDPR account deletion from the profile page)
 - Trip dashboard — create, list, open, edit, and delete trips
 - AI itinerary generation (streaming, one per trip)
 - Inline itinerary editing — activities, costs, day titles; changes saved via PATCH

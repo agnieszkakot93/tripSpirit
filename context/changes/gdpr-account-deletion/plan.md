@@ -461,9 +461,9 @@ infrastructure-only (wrangler config + production domain onboarding).
 
 #### Automated
 
-- [x] 3.1 `npx tsc --noEmit` passes
-- [x] 3.2 `npm run lint` passes
-- [x] 3.3 `npm run build` passes
+- [x] 3.1 `npx tsc --noEmit` passes — 20fe532
+- [x] 3.2 `npm run lint` passes — 20fe532
+- [x] 3.3 `npm run build` passes — 20fe532
 
 #### Manual
 
@@ -473,10 +473,10 @@ infrastructure-only (wrangler config + production domain onboarding).
 
 #### Automated
 
-- [ ] 4.1 `npx tsc --noEmit` passes
-- [ ] 4.2 `npm run lint` passes
-- [ ] 4.3 `npm run build` passes
+- [x] 4.1 `npx tsc --noEmit` passes
+- [x] 4.2 `npm run lint` passes
+- [x] 4.3 `npm run build` passes
 
 #### Manual
 
-- [ ] 4.4 Full erasure and reset flows verified via `npm run dev` or `/verify`; README updated
+- [x] 4.4 Full erasure and reset flows verified via `npm run dev` or `/verify`; README updated
