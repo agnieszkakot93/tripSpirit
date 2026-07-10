@@ -24,37 +24,41 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Password is required" }, { status: 400 });
   }
 
-  const db = await getDb();
+  try {
+    const db = await getDb();
 
-  const [user] = await db
-    .select({
-      id: users.id,
-      email: users.email,
-      passwordHash: users.passwordHash,
-    })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
+    const [user] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        passwordHash: users.passwordHash,
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
 
-  if (!user?.passwordHash) {
-    return NextResponse.json({ error: "Invalid password" }, { status: 403 });
+    if (!user?.passwordHash) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 403 });
+    }
+
+    const ok = await verifyPassword(password, user.passwordHash);
+    if (!ok) {
+      return NextResponse.json({ error: "Invalid password" }, { status: 403 });
+    }
+
+    // verification_tokens has no FK to users (Auth.js adapter design), so clean
+    // any orphaned reset tokens for this email explicitly.
+    if (user.email) {
+      await db
+        .delete(verificationTokens)
+        .where(eq(verificationTokens.identifier, user.email));
+    }
+
+    // users row cascades to trips / sessions / accounts.
+    await db.delete(users).where(eq(users.id, user.id));
+
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  const ok = await verifyPassword(password, user.passwordHash);
-  if (!ok) {
-    return NextResponse.json({ error: "Invalid password" }, { status: 403 });
-  }
-
-  // verification_tokens has no FK to users (Auth.js adapter design), so clean
-  // any orphaned reset tokens for this email explicitly.
-  if (user.email) {
-    await db
-      .delete(verificationTokens)
-      .where(eq(verificationTokens.identifier, user.email));
-  }
-
-  // users row cascades to trips / sessions / accounts.
-  await db.delete(users).where(eq(users.id, user.id));
-
-  return NextResponse.json({ ok: true });
 }

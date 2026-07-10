@@ -25,17 +25,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const db = await getDb();
-  const email = await consumePasswordResetToken(db, token);
-  if (!email) {
-    return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+  try {
+    const db = await getDb();
+    const email = await consumePasswordResetToken(db, token);
+    if (!email) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+
+    const passwordHash = await hashPassword(password);
+    const updated = await db
+      .update(users)
+      .set({ passwordHash })
+      .where(eq(users.email, email))
+      .returning({ id: users.id });
+
+    // Account was removed between token issue and consume — the token is now
+    // spent, so surface the same generic failure rather than a false success.
+    if (updated.length === 0) {
+      return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  const passwordHash = await hashPassword(password);
-  await db
-    .update(users)
-    .set({ passwordHash })
-    .where(eq(users.email, email));
-
-  return NextResponse.json({ ok: true });
 }

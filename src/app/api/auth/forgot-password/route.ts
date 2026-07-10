@@ -22,20 +22,27 @@ export async function POST(request: Request) {
 
   const email = emailRaw.trim().toLowerCase();
 
-  const db = await getDb();
-  const [user] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1);
+  // Always return { ok: true } regardless of whether the account exists OR
+  // whether token creation / email delivery fails. A thrown error here (e.g. a
+  // provider 5xx) would surface a 500 *only for registered emails*, turning
+  // this into an account-enumeration oracle — so swallow failures and log them
+  // server-side instead.
+  try {
+    const db = await getDb();
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
-  // Only act when the account exists, but always return the same response so
-  // callers cannot enumerate registered emails.
-  if (user) {
-    const { env } = await getAppCloudflareContext();
-    const token = await createPasswordResetToken(db, email);
-    const resetUrl = `${env.AUTH_URL}/reset-password?token=${token}`;
-    await sendPasswordResetEmail(env, { to: email, resetUrl });
+    if (user) {
+      const { env } = await getAppCloudflareContext();
+      const token = await createPasswordResetToken(db, email);
+      const resetUrl = `${env.AUTH_URL}/reset-password?token=${token}`;
+      await sendPasswordResetEmail(env, { to: email, resetUrl });
+    }
+  } catch (err) {
+    console.error("forgot-password: token/email delivery failed", err);
   }
 
   return NextResponse.json({ ok: true });
