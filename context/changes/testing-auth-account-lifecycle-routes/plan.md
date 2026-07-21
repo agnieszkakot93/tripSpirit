@@ -271,29 +271,29 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 2.1 Forgot-password parity cases (known / unknown / send-fail) all return identical 200 `{ ok: true }`
-- [x] 2.2 Reset forged / expired / reused return 400 with the generic invalid-link error
-- [x] 2.3 Successful reset updates `password_hash` and removes the token row
-- [x] 2.4 `npx vitest run src/app/api/auth` passes
-- [x] 2.5 `npm test` passes
-- [x] 2.6 `npx tsc --noEmit` passes
+- [x] 2.1 Forgot-password parity cases (known / unknown / send-fail) all return identical 200 `{ ok: true }` — b78c72c
+- [x] 2.2 Reset forged / expired / reused return 400 with the generic invalid-link error — b78c72c
+- [x] 2.3 Successful reset updates `password_hash` and removes the token row — b78c72c
+- [x] 2.4 `npx vitest run src/app/api/auth` passes — b78c72c
+- [x] 2.5 `npm test` passes — b78c72c
+- [x] 2.6 `npx tsc --noEmit` passes — b78c72c
 
 #### Manual
 
-- [x] 2.7 Test names make Risk #4 (enumeration + token replay) obvious without reading research
+- [x] 2.7 Test names make Risk #4 (enumeration + token replay) obvious without reading research — b78c72c
 
 ### Phase 3: Delete-account route tests
 
 #### Automated
 
-- [ ] 3.1 Unauthenticated delete → 401; wrong password → 403 + row unchanged; correct password → 200 + row gone
-- [ ] 3.2 `npx vitest run src/app/api/auth` passes
-- [ ] 3.3 `npm test` passes
-- [ ] 3.4 `npx tsc --noEmit` passes
+- [x] 3.1 Unauthenticated delete → 401; wrong password → 403 + row unchanged; correct password → 200 + row gone
+- [x] 3.2 `npx vitest run src/app/api/auth` passes
+- [x] 3.3 `npm test` passes
+- [x] 3.4 `npx tsc --noEmit` passes
 
 #### Manual
 
-- [ ] 3.5 Test names make delete auth order (401 then 403) and Risk #5 residual obvious
+- [x] 3.5 Test names make delete auth order (401 then 403) and Risk #5 residual obvious
 
 ### Phase 4: Cookbook + rollout notes
 
