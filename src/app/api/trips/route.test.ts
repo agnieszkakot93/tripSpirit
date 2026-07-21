@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppDatabase } from "@/lib/db";
-import { getTripForUser } from "@/lib/trips/queries";
+import { getTripForUser, listTripsForUser } from "@/lib/trips/queries";
 import {
   seedUser,
   setupRouteTest,
@@ -31,6 +31,14 @@ function jsonRequest(url: string, method: string, body: unknown) {
     method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+  });
+}
+
+function rawRequest(url: string, method: string, body: string) {
+  return new Request(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body,
   });
 }
 
@@ -96,5 +104,57 @@ describe("POST /api/trips", () => {
     const persisted = await getTripForUser(db, "u1", body.id);
     expect(persisted).not.toBeNull();
     expect(persisted?.userId).toBe("u1");
+  });
+
+  it("persists the create so a DB read-back matches the response (Risk #6)", async () => {
+    setSession({ user: { id: "u1" } });
+    const res = await POST(
+      jsonRequest("http://localhost/api/trips", "POST", validTripBody),
+    );
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as {
+      id: string;
+      destination: string;
+      durationDays: number;
+      budgetAmount: number;
+    };
+
+    const persisted = await getTripForUser(db, "u1", body.id);
+    expect(persisted).toMatchObject({
+      id: body.id,
+      destination: "Paris",
+      durationDays: 3,
+      budgetAmount: 500,
+    });
+  });
+
+  it("returns 400 for invalid JSON and writes nothing (Risk #6)", async () => {
+    setSession({ user: { id: "u1" } });
+    const res = await POST(
+      rawRequest("http://localhost/api/trips", "POST", "{not-json"),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(typeof body.error).toBe("string");
+    expect(body.error.length).toBeGreaterThan(0);
+
+    expect(await listTripsForUser(db, "u1")).toEqual([]);
+  });
+
+  it("returns 400 for an invalid field and writes nothing (Risk #6)", async () => {
+    setSession({ user: { id: "u1" } });
+    const res = await POST(
+      jsonRequest("http://localhost/api/trips", "POST", {
+        destination: "Paris",
+        durationDays: 0,
+        budgetAmount: 500,
+      }),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(typeof body.error).toBe("string");
+    expect(body.error.length).toBeGreaterThan(0);
+
+    expect(await listTripsForUser(db, "u1")).toEqual([]);
   });
 });

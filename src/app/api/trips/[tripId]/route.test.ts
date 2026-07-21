@@ -27,6 +27,12 @@ const fullReplaceBody = {
   budgetAmount: 1,
 };
 
+const ownerReplaceBody = {
+  destination: "Tokyo",
+  durationDays: 10,
+  budgetAmount: 3000,
+};
+
 function jsonRequest(url: string, method: string, body?: unknown) {
   return new Request(url, {
     method,
@@ -151,5 +157,97 @@ describe("/api/trips/[tripId] — ownership (Risk #1)", () => {
     const row = await getTripForUser(db, "u1", tripId);
     expect(row).not.toBeNull();
     expect(row?.destination).toBe("Lisbon");
+  });
+});
+
+describe("/api/trips/[tripId] — persistence + validation (Risk #6)", () => {
+  let db: AppDatabase;
+  let tripId: string;
+  let setSession: (session: MockSession) => void;
+
+  beforeEach(async () => {
+    ({ db, setSession } = setupRouteTest());
+    seedUser(db, "u1");
+    const trip = await seedTrip(db, "u1", {
+      destination: "Lisbon",
+      durationDays: 5,
+      budgetAmount: 1000,
+    });
+    tripId = trip.id;
+    setSession({ user: { id: "u1" } });
+  });
+
+  it("PATCH as owner returns 200 and DB read-back reflects the full replace", async () => {
+    const res = await PATCH(
+      jsonRequest(
+        `http://localhost/api/trips/${tripId}`,
+        "PATCH",
+        ownerReplaceBody,
+      ),
+      tripParams(tripId),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      destination: string;
+      durationDays: number;
+      budgetAmount: number;
+    };
+    expect(body).toMatchObject(ownerReplaceBody);
+
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(row).toMatchObject(ownerReplaceBody);
+  });
+
+  it("PATCH with a partial body returns 400 and leaves the row unchanged", async () => {
+    const res = await PATCH(
+      jsonRequest(`http://localhost/api/trips/${tripId}`, "PATCH", {
+        destination: "OnlyThis",
+      }),
+      tripParams(tripId),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(typeof body.error).toBe("string");
+    expect(body.error.length).toBeGreaterThan(0);
+
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(row).toMatchObject({
+      destination: "Lisbon",
+      durationDays: 5,
+      budgetAmount: 1000,
+    });
+  });
+
+  it("PATCH with an invalid field returns 400 and leaves the row unchanged", async () => {
+    const res = await PATCH(
+      jsonRequest(`http://localhost/api/trips/${tripId}`, "PATCH", {
+        destination: "Tokyo",
+        durationDays: 99,
+        budgetAmount: 3000,
+      }),
+      tripParams(tripId),
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: string };
+    expect(typeof body.error).toBe("string");
+    expect(body.error.length).toBeGreaterThan(0);
+
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(row).toMatchObject({
+      destination: "Lisbon",
+      durationDays: 5,
+      budgetAmount: 1000,
+    });
+  });
+
+  it("DELETE as owner returns 204 and removes the row", async () => {
+    const res = await DELETE(
+      jsonRequest(`http://localhost/api/trips/${tripId}`, "DELETE"),
+      tripParams(tripId),
+    );
+    expect(res.status).toBe(204);
+    expect(res.body).toBeNull();
+
+    expect(await getTripForUser(db, "u1", tripId)).toBeNull();
   });
 });

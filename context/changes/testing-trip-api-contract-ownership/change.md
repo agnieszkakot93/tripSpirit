@@ -24,3 +24,4 @@ Decisions (from planning):
 - Colocated `route.test.ts`; fill cookbook §6.2/§6.3; leave stale auth-edge comment alone
 
 Phase 1 (harness) landed: `src/test/route-harness.ts` — 6923fb1
+Phase 2 (auth + ownership) landed: trip `route.test.ts` files — 0a2e1e4

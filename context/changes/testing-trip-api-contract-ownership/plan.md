@@ -260,28 +260,28 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 2.1 Unauthenticated and wrong-owner cases land in colocated route tests
-- [x] 2.2 `npx vitest run src/app/api/trips` passes
-- [x] 2.3 `npm test` passes
-- [x] 2.4 `npx tsc --noEmit` passes
+- [x] 2.1 Unauthenticated and wrong-owner cases land in colocated route tests — 0a2e1e4
+- [x] 2.2 `npx vitest run src/app/api/trips` passes — 0a2e1e4
+- [x] 2.3 `npm test` passes — 0a2e1e4
+- [x] 2.4 `npx tsc --noEmit` passes — 0a2e1e4
 
 #### Manual
 
-- [x] 2.5 Test names make Risks #1 and #5 (API) obvious
+- [x] 2.5 Test names make Risks #1 and #5 (API) obvious — 0a2e1e4
 
 ### Phase 3: Persistence + validation route cases
 
 #### Automated
 
-- [ ] 3.1 Persistence cases assert DB read-back (not status-only)
-- [ ] 3.2 Invalid/partial body cases return 400 and leave DB unchanged
-- [ ] 3.3 `npx vitest run src/app/api/trips` passes
-- [ ] 3.4 `npm test` passes
-- [ ] 3.5 `npx tsc --noEmit` passes
+- [x] 3.1 Persistence cases assert DB read-back (not status-only)
+- [x] 3.2 Invalid/partial body cases return 400 and leave DB unchanged
+- [x] 3.3 `npx vitest run src/app/api/trips` passes
+- [x] 3.4 `npm test` passes
+- [x] 3.5 `npx tsc --noEmit` passes
 
 #### Manual
 
-- [ ] 3.6 No oracle-problem assertions (expected values not copied from validator implementation)
+- [x] 3.6 No oracle-problem assertions (expected values not copied from validator implementation)
 
 ### Phase 4: Cookbook §6.2 / §6.3 + rollout status
 
