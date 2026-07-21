@@ -299,9 +299,9 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 4.1 §6 documents auth email-mock / token-seed pattern (no TBD for those seams)
-- [x] 4.2 `npm test` still passes
+- [x] 4.1 §6 documents auth email-mock / token-seed pattern (no TBD for those seams) — 52eec53
+- [x] 4.2 `npm test` still passes — 52eec53
 
 #### Manual
 
-- [x] 4.3 Fresh-agent check: §6 alone is enough to add an auth-like route test
+- [x] 4.3 Fresh-agent check: §6 alone is enough to add an auth-like route test — 52eec53
