@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-21 (Phase 2 cookbook: auth lifecycle)
+> Last updated: 2026-07-21 (Phase 3 cookbook: itinerary generation)
 
 ## 1. Strategy
 
@@ -42,7 +42,7 @@ research's job, see §1 principle #3).
 | # | Risk (failure scenario) | Impact | Likelihood | Source (evidence — not anchor) |
 |---|--------------------------|--------|------------|--------------------------------|
 | 1 | A trip API route returns or mutates a trip **not owned** by the signed-in user (broken ownership / IDOR), leaking or corrupting another user's data | High | Medium | PRD §Guardrails ("a user's trips are never visible to another user"), FR-006/007/008; interview Q1, Q3; hot-spot dir `src/app/api` (23 commits/30d) |
-| 2 | Itinerary generation hits the ~30s edge-runtime ceiling or streams an empty/partial result — the user gets no clean error, a broken screen, or an incomplete itinerary is persisted | High | High | roadmap S-03 (north star, "riskiest slice", 30s NFR with no buffer); interview Q1, Q2, Q3; hot-spot dir `src/app/api` (23 commits/30d) |
+| 2 | Itinerary generation hits the ~30s edge-runtime ceiling or streams an empty/partial result — the user gets no usable itinerary, a broken screen, or an incomplete itinerary is persisted | High | High | roadmap S-03 (north star, "riskiest slice", 30s NFR with no buffer); interview Q1, Q2, Q3; hot-spot dir `src/app/api` (23 commits/30d) |
 | 3 | The AI returns a day-count or shape that doesn't match the trip duration / expected schema, and the completeness guard or the view mishandles it | Medium | Medium | interview Q2 (AI output shape drift); hot-spot dir `src/lib/trips` (14 commits/30d) |
 | 4 | Account-lifecycle abuse: forgot-password enumerates registered emails, a reset token is reused/forged, or account deletion succeeds without correct password + session | High | Medium | interview Q1, Q3; `context/changes/gdpr-account-deletion` review findings F1–F3; hot-spot dirs `src/app/api` + `src/app/login` (23 + 7 commits/30d) |
 | 5 | An unauthenticated or wrong user reaches a protected page or trip API without a 401 / redirect to sign-in | High | Medium | PRD FR-014 + §Guardrails ("no trip data accessible to unauthenticated users"); interview Q2 (auth/session regressions); hot-spot dir `src/app/(protected)` (17 commits/30d) |
@@ -60,7 +60,7 @@ padded here.
 | Risk | What would prove protection | Must challenge | Context `/10x-research` must ground | Likely cheapest layer | Anti-pattern to avoid |
 |------|-----------------------------|----------------|--------------------------------------|-----------------------|-----------------------|
 | #1 | A request for another user's trip id returns 404 (not the trip), and PATCH/DELETE on it changes nothing | "Authenticated" ≠ "authorized" — a valid session does not imply ownership of the target trip | How ownership is scoped (session user id vs trip.userId), what status a wrong-owner read returns, whether all four verbs enforce it | integration (route-level) | Happy-path-only: testing only the owner's own trip and never the cross-user case |
-| #2 | On timeout/abort or upstream error the client receives a clean, non-200 failure and **no** partial itinerary is written to the trip | "Stream started" ≠ "generation succeeded"; a 200 stream can still end empty | The abort/timeout path, the one-shot 409 guard, and the persistence guard that gates writing a completed object | integration (mock the AI SDK boundary) | Asserting exact AI text, or over-mocking so the timeout/persist path is never exercised |
+| #2 | Pre-stream failures return JSON non-200 (`401` / `404` / `409` / `500`); after the stream starts, timeout/abort/upstream failure may be HTTP 200 with an empty/incomplete text stream — in **both** cases **no** partial itinerary is written to the trip and the client must surface failure | "Stream started" ≠ "generation succeeded"; a 200 stream can still end empty | The abort/timeout path, the one-shot 409 guard, and the persistence guard that gates writing a completed object; distinguish pre-stream JSON errors from mid-stream empty-stream semantics | integration (mock the AI SDK boundary) | Asserting exact AI text; over-mocking so the timeout/persist path is never exercised; expecting mid-stream abort to return non-200 JSON |
 | #3 | A day-count / shape that mismatches trip duration is rejected by the completeness guard and never persisted; a matching one is accepted | A "valid JSON" object is not necessarily a valid itinerary for N days | The duration→schema mapping and the completeness predicate, with fixture objects (short, exact, over-long) | unit (deterministic helpers) | Oracle problem: copying the expected value from the helper under test instead of from the duration contract |
 | #4 | forgot-password returns identical 200 for known/unknown/failed-send; a reset token works once then 400s; delete requires correct password (403 on wrong, 401 on no session) | A 200 on the happy path doesn't prove the negative/abuse paths; "email sent" must not branch the response | Response parity across existence + send-failure, single-use token semantics, the delete auth/authz order | integration (route-level, mock email) | Testing only the successful reset and never enumeration / reuse / wrong-password |
 | #5 | Hitting a protected page unauthenticated redirects to sign-in; a trip API without a session returns 401 | The `(protected)` layout guard and per-route API guard are two separate mechanisms — both must hold | Where the redirect is enforced (layout vs middleware) and which API routes assert the session | integration for APIs; e2e for the page redirect | e2e where a cheap route-level 401 assertion already catches it |
@@ -76,7 +76,7 @@ orchestrator updates Status as artifacts appear on disk.
 |---|-----------|------------------|----------------|------------|--------|---------------|
 | 1 | Trip API contract & ownership | Prove trip routes enforce ownership + persist saves; bootstrap the API route test harness (none today) | #1, #5, #6 | integration | complete | context/changes/testing-trip-api-contract-ownership/ |
 | 2 | Auth & account-lifecycle routes | Prove reset can't enumerate/replay and deletion needs real auth | #4, #5 | integration | complete | context/changes/testing-auth-account-lifecycle-routes/ |
-| 3 | Itinerary generation & shape contract | Prove generation fails cleanly and never persists a mismatched itinerary | #2, #3 | unit + integration | planned | context/changes/testing-itinerary-generation-shape-contract/ |
+| 3 | Itinerary generation & shape contract | Prove generation fails cleanly and never persists a mismatched itinerary | #2, #3 | unit + integration | complete | context/changes/testing-itinerary-generation-shape-contract/ |
 | 4 | Critical-path e2e smoke + CI gate | Prove the sign-in→create→generate→edit path works end-to-end; lock the floor in CI | cross-cutting (#2, #5) | e2e + gates | not started | — |
 
 **Status vocabulary** (fixed — parser literals): `not started` →
@@ -91,7 +91,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 |-------|------|---------|-------|
 | unit + integration | Vitest | 3.x / 4.x (`npm test` → `vitest run`) | Unit tests under `src/lib/trips/`; route integration tests under `src/app/api/trips/` (§6.2) |
 | API / route testing | Vitest + `src/test/route-harness.ts` | — | Direct handler call; `vi.mock` `@/lib/auth` + `@/lib/db`; in-memory better-sqlite3. See §6.2 / §6.3 |
-| external-boundary mocking | none yet — see §3 Phase 3 | — | AI SDK (`ai` / `@ai-sdk/openai`) and email (Resend `fetch`) are the boundaries to mock |
+| external-boundary mocking | Vitest `vi.mock` at module seams | — | AI SDK (`ai.streamObject`) and email (Resend `fetch`) mocked at the import boundary — see §6.2 / §6.4 |
 | e2e | none yet — see §3 Phase 4 | — | Candidate: Playwright, or the in-session Claude Preview / Chrome MCP driving the real dev server |
 | quality gates (CI) | none yet — see §3 Phase 4 | — | GitHub Actions is the stated CI provider (`tech-stack.md`); currently unwired (parked in roadmap) |
 
@@ -138,6 +138,7 @@ Phase <N>."
   - Auth lifecycle: `src/app/api/auth/forgot-password/route.test.ts`,
     `src/app/api/auth/reset-password/route.test.ts`,
     `src/app/api/auth/delete-account/route.test.ts`
+  - Itinerary generation: `src/app/api/trips/[tripId]/itinerary/route.test.ts`
 - **Mocking policy**: mock only runtime seams. Always mock `@/lib/auth`
   (`auth`) and `@/lib/db` (`getDb`) when the route uses them. For
   account-lifecycle routes also mock:
@@ -146,8 +147,8 @@ Phase <N>."
     `{ env: { AUTH_URL: "…" } }` (needed on the known-email forgot-password path)
   Do **not** mock `@/lib/trips/queries`, `@/lib/auth-tokens`, `@/lib/password`,
   validation, or drizzle internals. Seed passwords with real `hashPassword`
-  (cache in `beforeAll` if scrypt cost hurts). (Later: also mock AI SDK at the
-  HTTP edge when generation routes are under test — §3 Phase 3.)
+  (cache in `beforeAll` if scrypt cost hurts). For generation routes also
+  mock `ai` (`streamObject`) and extend the Cloudflare context stub — see §6.4.
 - **Wire mocks** (top of file, before importing the route module):
 
 ```ts
@@ -225,11 +226,107 @@ vi.mock("@/lib/cloudflare-context", () => ({
 
 ### 6.4 Adding a test around AI generation
 
-- TBD — see §3 Phase 3. Expected pattern: unit-test the deterministic
-  helpers (duration→schema, completeness guard, prompt builder) against
-  fixtures; for the route, mock the AI SDK boundary to simulate
-  timeout/abort, empty stream, and incomplete object — never assert exact
-  generated text.
+Two layers: **unit** for deterministic helpers, **integration** for the route
+wire-up (persist gate, abort/empty, one-shot 409).
+
+#### Unit — duration / shape helpers
+
+- **Location**: `src/lib/trips/itinerary.test.ts` (beside `itinerary.ts`).
+- **Reference**: `buildItinerarySchemaForDuration`, `isItineraryCompleteForDuration`.
+- **Oracle**: use a **literal** `TRIP_DURATION_DAYS` constant and a
+  `sampleItinerary(n)` fixture builder. Assert short (`n - 1`), exact (`n`),
+  over-long (`n + 1`), and non-sequential `day` numbers. Never derive the
+  expected count from helper internals or Zod describe strings (Risk #3).
+- **Run locally**: `npx vitest run src/lib/trips/itinerary.test.ts`.
+
+#### Integration — generation route (`POST`)
+
+- **Location**: `src/app/api/trips/[tripId]/itinerary/route.test.ts`.
+- **Reference test**: same file — locks Risks #2 / #3 persistence and Risk #5
+  residual itinerary 401.
+- **Mocking policy** (in addition to §6.2 auth + db):
+  - `@/lib/cloudflare-context` → `{ env: { OPENAI_API_KEY: "…" }, ctx: { waitUntil } }`
+    where `waitUntil` collects promises so tests can `await Promise.all(...)`
+    before DB read-back.
+  - `ai` → `{ streamObject: mockStreamObject }` — **hoist** the mock with
+    `vi.hoisted` **before** `vi.mock` and **before** importing the route.
+  - Optionally stub `AbortSignal.timeout` to a short ms (~50) for the abort
+    case — do **not** wait 28s wall-clock.
+  - Do **not** mock `@/lib/trips/queries`, `@/lib/trips/itinerary` helpers,
+    or drizzle internals. `updateTripItinerary` must run for real against the
+    in-memory sqlite from `setupRouteTest()`.
+- **Capture `onFinish`**: the `streamObject` mock records the options object
+  passed by the route. Return a stub
+  `{ toTextStreamResponse: () => new Response("", { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } }) }`.
+  After calling `POST`, invoke the captured `onFinish({ object })` manually
+  (or let abort fire) to exercise the persist gate.
+- **Assert**:
+  - Pre-stream: `401` / `409` / `500` (missing key) as JSON — `streamObject`
+    must **not** be called when the route returns early.
+  - Mid-stream: HTTP **200** text/plain stream is valid for abort/empty paths
+    (Risk #2) — assert stream class, **not** `expect(status).not.toBe(200)`.
+  - Always read back `itinerary_json` via `getTripForUser` after flushing
+    `waitUntil`: null for empty/abort/incomplete `onFinish`, set for a
+    complete object matching `trip.durationDays`.
+  - Never assert exact AI-generated text.
+- **Typical cases** (itinerary POST):
+  - Unauthenticated → `401`
+  - Existing `itinerary_json` → `409` + row unchanged (one-shot)
+  - Missing `OPENAI_API_KEY` → `500` + no stream
+  - `onFinish({ object: undefined })` or abort → `itinerary_json` still null
+  - `onFinish({ object: incomplete })` (day-count mismatch) → null
+  - `onFinish({ object: complete })` → persisted JSON matches fixture
+- **PATCH on this route**: cover unauthenticated `401` only; ownership/persist
+  matrix for edits is out of scope here.
+- **Run locally**: `npx vitest run src/app/api/trips/[tripId]/itinerary`
+  or `npm test`.
+
+Minimal mock skeleton (adapt from the reference test):
+
+```ts
+const { mockStreamObject, cfState, waitUntilPromises, lastStreamObjectOptions } =
+  vi.hoisted(() => {
+    const waitUntilPromises: Promise<unknown>[] = [];
+    const lastStreamObjectOptions = { current: null as StreamObjectOptions | null };
+    const cfState = { openaiApiKey: "test-openai-key" as string | undefined };
+    return {
+      waitUntilPromises,
+      lastStreamObjectOptions,
+      cfState,
+      mockStreamObject: vi.fn((options: StreamObjectOptions) => {
+        lastStreamObjectOptions.current = options;
+        return {
+          toTextStreamResponse: () =>
+            new Response("", {
+              status: 200,
+              headers: { "Content-Type": "text/plain; charset=utf-8" },
+            }),
+        };
+      }),
+    };
+  });
+
+vi.mock("@/lib/cloudflare-context", () => ({
+  getAppCloudflareContext: async () => ({
+    env: { OPENAI_API_KEY: cfState.openaiApiKey },
+    cf: {},
+    ctx: {
+      waitUntil: (p: Promise<unknown>) => {
+        waitUntilPromises.push(p);
+      },
+    },
+  }),
+}));
+
+vi.mock("ai", () => ({ streamObject: mockStreamObject }));
+
+// import { POST } from "./route" AFTER mocks
+
+async function flushWaitUntil() {
+  await Promise.all([...waitUntilPromises]);
+  waitUntilPromises.length = 0;
+}
+```
 
 ### 6.5 Adding an e2e test
 
@@ -250,6 +347,16 @@ vi.mock("@/lib/cloudflare-context", () => ({
   Email + Cloudflare context mocks are documented in §6.2 / §6.3. Trip CRUD
   401 already covered in Phase 1 — do not re-test here. Page-layout redirect
   still deferred to §3 Phase 4 e2e; itinerary 401 to §3 Phase 3.
+- **§3 Phase 3 — Itinerary generation & shape contract** (change
+  `testing-itinerary-generation-shape-contract`): unit tests in
+  `src/lib/trips/itinerary.test.ts` lock Risk #3 (literal-duration oracle,
+  short/exact/over-long/non-sequential). Colocated
+  `src/app/api/trips/[tripId]/itinerary/route.test.ts` mocks
+  `ai.streamObject` + Cloudflare `waitUntil` / `OPENAI_API_KEY` to prove
+  Risk #2 (abort/empty → no persist; pre-stream JSON non-200 vs mid-stream
+  200 empty stream) and Risk #3 wire-up (incomplete never written, complete
+  persists). Pattern documented in §6.4. PATCH on this route is 401-only;
+  page-layout redirect still deferred to §3 Phase 4 e2e.
 
 ## 7. What We Deliberately Don't Test
 

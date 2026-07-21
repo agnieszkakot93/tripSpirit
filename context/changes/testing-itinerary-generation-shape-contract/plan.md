@@ -235,24 +235,24 @@ None. Test-only change (plus foundation doc edits); no schema or runtime behavio
 
 #### Automated
 
-- [x] 2.1 Abort/empty and incomplete paths leave `itinerary_json` null; complete path persists
-- [x] 2.2 409 one-shot and POST/PATCH 401 pass
-- [x] 2.3 `npx vitest run src/app/api/trips/[tripId]/itinerary` passes
-- [x] 2.4 `npm test` passes
-- [x] 2.5 `npx tsc --noEmit` passes
+- [x] 2.1 Abort/empty and incomplete paths leave `itinerary_json` null; complete path persists — 21bb685
+- [x] 2.2 409 one-shot and POST/PATCH 401 pass — 21bb685
+- [x] 2.3 `npx vitest run src/app/api/trips/[tripId]/itinerary` passes — 21bb685
+- [x] 2.4 `npm test` passes — 21bb685
+- [x] 2.5 `npx tsc --noEmit` passes — 21bb685
 
 #### Manual
 
-- [x] 2.6 Test names make Risk #2 (no partial persist) and Risk #3 (incomplete never written) obvious
+- [x] 2.6 Test names make Risk #2 (no partial persist) and Risk #3 (incomplete never written) obvious — 21bb685
 
 ### Phase 3: Cookbook + §2 Risk #2 correction
 
 #### Automated
 
-- [ ] 3.1 §6.4 documents AI mock / onFinish / DB read-back (no TBD for those seams)
-- [ ] 3.2 §2 Risk #2 no longer claims mid-stream failures must be non-200
-- [ ] 3.3 `npm test` still passes
+- [x] 3.1 §6.4 documents AI mock / onFinish / DB read-back (no TBD for those seams)
+- [x] 3.2 §2 Risk #2 no longer claims mid-stream failures must be non-200
+- [x] 3.3 `npm test` still passes
 
 #### Manual
 
-- [ ] 3.4 Fresh-agent check: §6.4 alone is enough to add a generation-like route test
+- [x] 3.4 Fresh-agent check: §6.4 alone is enough to add a generation-like route test
