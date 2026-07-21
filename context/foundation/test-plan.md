@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-21 (Phase 1 planned)
+> Last updated: 2026-07-21 (Phase 1 cookbook landing)
 
 ## 1. Strategy
 
@@ -74,7 +74,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|-----------|------------------|----------------|------------|--------|---------------|
-| 1 | Trip API contract & ownership | Prove trip routes enforce ownership + persist saves; bootstrap the API route test harness (none today) | #1, #5, #6 | integration | planned | context/changes/testing-trip-api-contract-ownership/ |
+| 1 | Trip API contract & ownership | Prove trip routes enforce ownership + persist saves; bootstrap the API route test harness (none today) | #1, #5, #6 | integration | implementing | context/changes/testing-trip-api-contract-ownership/ |
 | 2 | Auth & account-lifecycle routes | Prove reset can't enumerate/replay and deletion needs real auth | #4, #5 | integration | not started | — |
 | 3 | Itinerary generation & shape contract | Prove generation fails cleanly and never persists a mismatched itinerary | #2, #3 | unit + integration | not started | — |
 | 4 | Critical-path e2e smoke + CI gate | Prove the sign-in→create→generate→edit path works end-to-end; lock the floor in CI | cross-cutting (#2, #5) | e2e + gates | not started | — |
@@ -89,8 +89,8 @@ The classic test base for this project. AI-native tools (if any) carry a
 
 | Layer | Tool | Version | Notes |
 |-------|------|---------|-------|
-| unit + integration | Vitest | 3.x (`npm test` → `vitest run`) | Configured via package.json; **3 test files today, all in `src/lib/trips/`** — API/auth/component layers bare |
-| API / route testing | none yet — see §3 Phase 1 | — | Routes run on the workerd runtime; Phase 1 research picks the harness (Vitest + mocked `auth()`/`getDb`, or `wrangler`/`unstable_dev`) |
+| unit + integration | Vitest | 3.x / 4.x (`npm test` → `vitest run`) | Unit tests under `src/lib/trips/`; route integration tests under `src/app/api/trips/` (§6.2) |
+| API / route testing | Vitest + `src/test/route-harness.ts` | — | Direct handler call; `vi.mock` `@/lib/auth` + `@/lib/db`; in-memory better-sqlite3. See §6.2 / §6.3 |
 | external-boundary mocking | none yet — see §3 Phase 3 | — | AI SDK (`ai` / `@ai-sdk/openai`) and email (Resend `fetch`) are the boundaries to mock |
 | e2e | none yet — see §3 Phase 4 | — | Candidate: Playwright, or the in-session Claude Preview / Chrome MCP driving the real dev server |
 | quality gates (CI) | none yet — see §3 Phase 4 | — | GitHub Actions is the stated CI provider (`tech-stack.md`); currently unwired (parked in roadmap) |
@@ -127,17 +127,50 @@ Phase <N>."
 
 ### 6.2 Adding an integration (route) test
 
-- TBD — see §3 Phase 1 (trip API ownership/persistence pattern) and Phase 2
-  (auth/lifecycle pattern). Mocking policy will be fixed there: mock only the
-  external edge (`auth()` session, AI SDK, Resend HTTP); never mock internal
-  modules; assert response **and** the persisted D1 side-effect.
+- **Harness**: `src/test/route-harness.ts` — `setupRouteTest()`, `seedUser()`,
+  `seedTrip()`, `mockAuth`, `mockGetDb`.
+- **Location**: colocated next to the route — e.g. `src/app/api/trips/route.test.ts`.
+- **Reference tests**: `src/app/api/trips/route.test.ts`,
+  `src/app/api/trips/[tripId]/route.test.ts`.
+- **Mocking policy**: mock only the runtime seams `@/lib/auth` (`auth`) and
+  `@/lib/db` (`getDb`). Do **not** mock `@/lib/trips/queries`, validation, or
+  drizzle internals. (Later phases: also mock AI SDK / Resend at the HTTP edge
+  when those routes are under test.)
+- **Wire mocks** (top of file, before importing the route module):
+
+```ts
+vi.mock("@/lib/auth", async () => {
+  const harness = await import("@/test/route-harness");
+  return { auth: harness.mockAuth };
+});
+vi.mock("@/lib/db", async () => {
+  const harness = await import("@/test/route-harness");
+  return { getDb: harness.mockGetDb };
+});
+```
+
+- **beforeEach**: `const { db, setSession } = setupRouteTest();` then
+  `setSession(null)` or `setSession({ user: { id: "u1" } })`.
+- **Assert**: HTTP status + body **and** DB read-back via the same `db`
+  (e.g. `getTripForUser`). For wrong-owner mutate verbs, prove the owner row
+  is **unchanged** — status 404 alone is not enough (wrong-owner and missing
+  both return 404).
+- **Run locally**: `npx vitest run src/app/api/trips` or `npm test`.
 
 ### 6.3 Adding a test for a new API endpoint
 
-- TBD — see §3 Phase 1. Expected pattern: exercise the route handler with a
-  mocked session + real (local D1 / in-memory) DB, assert status + body +
-  read-back of persisted state, and always include the wrong-owner and
-  unauthenticated cases.
+1. Add `route.test.ts` beside the handler.
+2. Copy the `vi.mock` + `setupRouteTest` pattern from §6.2.
+3. Always cover:
+   - **Unauthenticated** → 401 `{ error: "Unauthorized" }`
+   - **Wrong-owner** (if the resource is user-scoped) → 404 + row unchanged
+     on mutate
+   - **Owner happy path** with DB read-back (not status-only)
+   - **Invalid / partial body** → 400 and no write (when the route validates)
+4. Dynamic-segment handlers take `{ params: Promise.resolve({ … }) }`.
+5. Do not assert exact validator error strings (oracle problem) — assert 400
+   and that `error` is a non-empty string; compare DB to the request fixture
+   or prior seed.
 
 ### 6.4 Adding a test around AI generation
 
@@ -153,7 +186,11 @@ Phase <N>."
 
 ### 6.6 Per-rollout-phase notes
 
-(Filled in as phases land.)
+- **§3 Phase 1 — Trip API contract & ownership** (change
+  `testing-trip-api-contract-ownership`): shared harness under
+  `src/test/route-harness.ts`; trip list/create and `[tripId]` route tests lock
+  Risks #1 / #5 (API 401) / #6. Page-layout redirect deferred to §3 Phase 4
+  e2e. Itinerary/generation routes deferred to §3 Phase 3.
 
 ## 7. What We Deliberately Don't Test
 

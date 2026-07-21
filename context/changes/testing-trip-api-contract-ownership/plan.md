@@ -273,23 +273,23 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 3.1 Persistence cases assert DB read-back (not status-only)
-- [x] 3.2 Invalid/partial body cases return 400 and leave DB unchanged
-- [x] 3.3 `npx vitest run src/app/api/trips` passes
-- [x] 3.4 `npm test` passes
-- [x] 3.5 `npx tsc --noEmit` passes
+- [x] 3.1 Persistence cases assert DB read-back (not status-only) — b40784a
+- [x] 3.2 Invalid/partial body cases return 400 and leave DB unchanged — b40784a
+- [x] 3.3 `npx vitest run src/app/api/trips` passes — b40784a
+- [x] 3.4 `npm test` passes — b40784a
+- [x] 3.5 `npx tsc --noEmit` passes — b40784a
 
 #### Manual
 
-- [x] 3.6 No oracle-problem assertions (expected values not copied from validator implementation)
+- [x] 3.6 No oracle-problem assertions (expected values not copied from validator implementation) — b40784a
 
 ### Phase 4: Cookbook §6.2 / §6.3 + rollout status
 
 #### Automated
 
-- [ ] 4.1 §6.2 and §6.3 document the shipped harness (no TBD for trip routes)
-- [ ] 4.2 `npm test` still passes
+- [x] 4.1 §6.2 and §6.3 document the shipped harness (no TBD for trip routes)
+- [x] 4.2 `npm test` still passes
 
 #### Manual
 
-- [ ] 4.3 Fresh-agent check: §6 alone is enough to add a trip-like route test
+- [x] 4.3 Fresh-agent check: §6 alone is enough to add a trip-like route test

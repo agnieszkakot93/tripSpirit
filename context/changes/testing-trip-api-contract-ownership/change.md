@@ -25,3 +25,5 @@ Decisions (from planning):
 
 Phase 1 (harness) landed: `src/test/route-harness.ts` — 6923fb1
 Phase 2 (auth + ownership) landed: trip `route.test.ts` files — 0a2e1e4
+Phase 3 (persistence + validation) landed — b40784a
+Phase 4 (cookbook §6.2 / §6.3 / §6.6) landing
