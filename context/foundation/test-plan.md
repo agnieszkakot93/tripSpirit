@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-21 (Phase 1 complete)
+> Last updated: 2026-07-21 (Phase 2 cookbook: auth lifecycle)
 
 ## 1. Strategy
 
@@ -128,14 +128,26 @@ Phase <N>."
 ### 6.2 Adding an integration (route) test
 
 - **Harness**: `src/test/route-harness.ts` — `setupRouteTest()`, `seedUser()`,
-  `seedTrip()`, `mockAuth`, `mockGetDb`.
-- **Location**: colocated next to the route — e.g. `src/app/api/trips/route.test.ts`.
-- **Reference tests**: `src/app/api/trips/route.test.ts`,
-  `src/app/api/trips/[tripId]/route.test.ts`.
-- **Mocking policy**: mock only the runtime seams `@/lib/auth` (`auth`) and
-  `@/lib/db` (`getDb`). Do **not** mock `@/lib/trips/queries`, validation, or
-  drizzle internals. (Later phases: also mock AI SDK / Resend at the HTTP edge
-  when those routes are under test.)
+  `seedTrip()`, `seedResetToken()`, `mockAuth`, `mockGetDb`. DDL includes
+  `users`, `trips`, and `verification_tokens`.
+- **Location**: colocated next to the route — e.g. `src/app/api/trips/route.test.ts`
+  or `src/app/api/auth/forgot-password/route.test.ts`.
+- **Reference tests**:
+  - Trips: `src/app/api/trips/route.test.ts`,
+    `src/app/api/trips/[tripId]/route.test.ts`
+  - Auth lifecycle: `src/app/api/auth/forgot-password/route.test.ts`,
+    `src/app/api/auth/reset-password/route.test.ts`,
+    `src/app/api/auth/delete-account/route.test.ts`
+- **Mocking policy**: mock only runtime seams. Always mock `@/lib/auth`
+  (`auth`) and `@/lib/db` (`getDb`) when the route uses them. For
+  account-lifecycle routes also mock:
+  - `@/lib/email` (`sendPasswordResetEmail`) — controllable resolve vs throw
+  - `@/lib/cloudflare-context` (`getAppCloudflareContext`) →
+    `{ env: { AUTH_URL: "…" } }` (needed on the known-email forgot-password path)
+  Do **not** mock `@/lib/trips/queries`, `@/lib/auth-tokens`, `@/lib/password`,
+  validation, or drizzle internals. Seed passwords with real `hashPassword`
+  (cache in `beforeAll` if scrypt cost hurts). (Later: also mock AI SDK at the
+  HTTP edge when generation routes are under test — §3 Phase 3.)
 - **Wire mocks** (top of file, before importing the route module):
 
 ```ts
@@ -149,28 +161,67 @@ vi.mock("@/lib/db", async () => {
 });
 ```
 
+Auth forgot-password extras (hoist a controllable email mock):
+
+```ts
+const { mockSendPasswordResetEmail } = vi.hoisted(() => ({
+  mockSendPasswordResetEmail: vi.fn(),
+}));
+vi.mock("@/lib/email", () => ({
+  sendPasswordResetEmail: mockSendPasswordResetEmail,
+}));
+vi.mock("@/lib/cloudflare-context", () => ({
+  getAppCloudflareContext: async () => ({
+    env: { AUTH_URL: "https://example.test" },
+    cf: {},
+    ctx: {},
+  }),
+}));
+```
+
 - **beforeEach**: `const { db, setSession } = setupRouteTest();` then
-  `setSession(null)` or `setSession({ user: { id: "u1" } })`.
+  `setSession(null)` or `setSession({ user: { id: "u1" } })`. For password
+  flows: `seedUser(db, "u1", { email, passwordHash })`. For reset cases that
+  must not depend on forgot-password: `seedResetToken(db, email)` (live) or
+  `seedResetToken(db, email, { expires: pastDate })` (expired).
 - **Assert**: HTTP status + body **and** DB read-back via the same `db`
-  (e.g. `getTripForUser`). For wrong-owner mutate verbs, prove the owner row
-  is **unchanged** — status 404 alone is not enough (wrong-owner and missing
-  both return 404).
-- **Run locally**: `npx vitest run src/app/api/trips` or `npm test`.
+  (e.g. `getTripForUser`, `users` / `verification_tokens` selects). For
+  wrong-owner mutate verbs, prove the owner row is **unchanged** — status 404
+  alone is not enough (wrong-owner and missing both return 404). For
+  delete-account wrong-password / success, prove the user row is unchanged /
+  gone (status alone is insufficient).
+- **Run locally**: `npx vitest run src/app/api/trips`,
+  `npx vitest run src/app/api/auth`, or `npm test`.
 
 ### 6.3 Adding a test for a new API endpoint
 
 1. Add `route.test.ts` beside the handler.
-2. Copy the `vi.mock` + `setupRouteTest` pattern from §6.2.
-3. Always cover:
+2. Copy the `vi.mock` + `setupRouteTest` pattern from §6.2 (add email /
+   Cloudflare mocks when the route sends mail or reads `AUTH_URL`).
+3. Always cover (trip / user-scoped resources):
    - **Unauthenticated** → 401 `{ error: "Unauthorized" }`
    - **Wrong-owner** (if the resource is user-scoped) → 404 + row unchanged
      on mutate
    - **Owner happy path** with DB read-back (not status-only)
    - **Invalid / partial body** → 400 and no write (when the route validates)
-4. Dynamic-segment handlers take `{ params: Promise.resolve({ … }) }`.
-5. Do not assert exact validator error strings (oracle problem) — assert 400
+4. Always cover (account-lifecycle / auth routes under `src/app/api/auth/`):
+   - **Forgot-password response parity** — known email + send ok, unknown
+     email, and known email + `sendPasswordResetEmail` **throws** all return
+     the same `200 { ok: true }` (do not treat happy-path-only as enough).
+     Mock email to throw for the send-failure branch; console fallback never
+     throws in Vitest.
+   - **Reset-token abuse** — forged, expired, and reused tokens all return
+     the same generic `400` (seed via `seedResetToken`; do not mock
+     `auth-tokens`). Success updates `password_hash` and removes the token row.
+   - **Delete-account auth order** — unauthenticated → `401` + row unchanged;
+     wrong password → `403` + row unchanged; correct password → `200` + user
+     gone (and verification tokens for that email cleaned when present).
+5. Dynamic-segment handlers take `{ params: Promise.resolve({ … }) }`.
+6. Do not assert exact validator error strings (oracle problem) — assert 400
    and that `error` is a non-empty string; compare DB to the request fixture
-   or prior seed.
+   or prior seed. Stable public auth messages
+   (`"Unauthorized"`, `"Invalid or expired reset link"`, `"Invalid password"`)
+   are the contract and may be asserted.
 
 ### 6.4 Adding a test around AI generation
 
@@ -191,6 +242,14 @@ vi.mock("@/lib/db", async () => {
   `src/test/route-harness.ts`; trip list/create and `[tripId]` route tests lock
   Risks #1 / #5 (API 401) / #6. Page-layout redirect deferred to §3 Phase 4
   e2e. Itinerary/generation routes deferred to §3 Phase 3.
+- **§3 Phase 2 — Auth & account-lifecycle routes** (change
+  `testing-auth-account-lifecycle-routes`): harness gained `verification_tokens`
+  DDL, richer `seedUser({ email?, passwordHash? })`, and `seedResetToken`.
+  Colocated tests under `src/app/api/auth/` lock Risk #4 (forgot parity,
+  forge/expire/reuse, delete 403) and Risk #5 residual delete-account 401.
+  Email + Cloudflare context mocks are documented in §6.2 / §6.3. Trip CRUD
+  401 already covered in Phase 1 — do not re-test here. Page-layout redirect
+  still deferred to §3 Phase 4 e2e; itinerary 401 to §3 Phase 3.
 
 ## 7. What We Deliberately Don't Test
 

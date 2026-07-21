@@ -286,22 +286,22 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 3.1 Unauthenticated delete → 401; wrong password → 403 + row unchanged; correct password → 200 + row gone
-- [x] 3.2 `npx vitest run src/app/api/auth` passes
-- [x] 3.3 `npm test` passes
-- [x] 3.4 `npx tsc --noEmit` passes
+- [x] 3.1 Unauthenticated delete → 401; wrong password → 403 + row unchanged; correct password → 200 + row gone — 607b205
+- [x] 3.2 `npx vitest run src/app/api/auth` passes — 607b205
+- [x] 3.3 `npm test` passes — 607b205
+- [x] 3.4 `npx tsc --noEmit` passes — 607b205
 
 #### Manual
 
-- [x] 3.5 Test names make delete auth order (401 then 403) and Risk #5 residual obvious
+- [x] 3.5 Test names make delete auth order (401 then 403) and Risk #5 residual obvious — 607b205
 
 ### Phase 4: Cookbook + rollout notes
 
 #### Automated
 
-- [ ] 4.1 §6 documents auth email-mock / token-seed pattern (no TBD for those seams)
-- [ ] 4.2 `npm test` still passes
+- [x] 4.1 §6 documents auth email-mock / token-seed pattern (no TBD for those seams)
+- [x] 4.2 `npm test` still passes
 
 #### Manual
 
-- [ ] 4.3 Fresh-agent check: §6 alone is enough to add an auth-like route test
+- [x] 4.3 Fresh-agent check: §6 alone is enough to add an auth-like route test
