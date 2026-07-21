@@ -43,7 +43,7 @@ export async function mockGetDb(): Promise<AppDatabase> {
   return routeTestState.db;
 }
 
-/** Fresh in-memory SQLite + drizzle with users/trips DDL (FK-ready). */
+/** Fresh in-memory SQLite + drizzle with users/trips/verification_tokens DDL. */
 export function makeTestDb(): {
   db: AppDatabase;
   sqlite: Database.Database;
@@ -69,13 +69,54 @@ export function makeTestDb(): {
       updated_at INTEGER NOT NULL
     );
     CREATE INDEX trips_user_idx ON trips (userId);
+    CREATE TABLE verification_tokens (
+      identifier TEXT NOT NULL,
+      token TEXT PRIMARY KEY NOT NULL,
+      expires INTEGER NOT NULL
+    );
   `);
   const db = drizzle(sqlite, { schema }) as unknown as AppDatabase;
   return { db, sqlite };
 }
 
-export function seedUser(db: AppDatabase, userId: string) {
-  db.insert(schema.users).values({ id: userId }).run();
+export function seedUser(
+  db: AppDatabase,
+  userId: string,
+  overrides: Partial<{
+    email: string;
+    passwordHash: string;
+  }> = {},
+) {
+  db.insert(schema.users)
+    .values({
+      id: userId,
+      email: overrides.email,
+      passwordHash: overrides.passwordHash,
+    })
+    .run();
+}
+
+/**
+ * Insert a password-reset token row. Returns the raw token for reset-password
+ * requests. Default expiry is 1 hour from now; pass a past Date for expired.
+ */
+export function seedResetToken(
+  db: AppDatabase,
+  email: string,
+  overrides: Partial<{
+    token: string;
+    expires: Date;
+  }> = {},
+): string {
+  const token = overrides.token ?? crypto.randomUUID();
+  const expires =
+    overrides.expires ?? new Date(Date.now() + 60 * 60 * 1000);
+
+  db.insert(schema.verificationTokens)
+    .values({ identifier: email, token, expires })
+    .run();
+
+  return token;
 }
 
 export function seedTrip(
