@@ -249,10 +249,10 @@ None. Test-only change (plus foundation doc edits); no schema or runtime behavio
 
 #### Automated
 
-- [x] 3.1 §6.4 documents AI mock / onFinish / DB read-back (no TBD for those seams)
-- [x] 3.2 §2 Risk #2 no longer claims mid-stream failures must be non-200
-- [x] 3.3 `npm test` still passes
+- [x] 3.1 §6.4 documents AI mock / onFinish / DB read-back (no TBD for those seams) — a2ef437
+- [x] 3.2 §2 Risk #2 no longer claims mid-stream failures must be non-200 — a2ef437
+- [x] 3.3 `npm test` still passes — a2ef437
 
 #### Manual
 
-- [x] 3.4 Fresh-agent check: §6.4 alone is enough to add a generation-like route test
+- [x] 3.4 Fresh-agent check: §6.4 alone is enough to add a generation-like route test — a2ef437
