@@ -222,28 +222,28 @@ None. Test-only change (plus foundation doc edits); no schema or runtime behavio
 
 #### Automated
 
-- [x] 1.1 Schema rejects over-long; completeness returns false for over-long
-- [x] 1.2 Existing short/exact/non-sequential cases still pass
-- [x] 1.3 `npx vitest run src/lib/trips/itinerary.test.ts` passes
-- [x] 1.4 `npx tsc --noEmit` passes
+- [x] 1.1 Schema rejects over-long; completeness returns false for over-long — aaced73
+- [x] 1.2 Existing short/exact/non-sequential cases still pass — aaced73
+- [x] 1.3 `npx vitest run src/lib/trips/itinerary.test.ts` passes — aaced73
+- [x] 1.4 `npx tsc --noEmit` passes — aaced73
 
 #### Manual
 
-- [x] 1.5 Test names make Risk #3 (day-count mismatch) obvious without reading research
+- [x] 1.5 Test names make Risk #3 (day-count mismatch) obvious without reading research — aaced73
 
 ### Phase 2: Route — generation integration tests
 
 #### Automated
 
-- [ ] 2.1 Abort/empty and incomplete paths leave `itinerary_json` null; complete path persists
-- [ ] 2.2 409 one-shot and POST/PATCH 401 pass
-- [ ] 2.3 `npx vitest run src/app/api/trips/[tripId]/itinerary` passes
-- [ ] 2.4 `npm test` passes
-- [ ] 2.5 `npx tsc --noEmit` passes
+- [x] 2.1 Abort/empty and incomplete paths leave `itinerary_json` null; complete path persists
+- [x] 2.2 409 one-shot and POST/PATCH 401 pass
+- [x] 2.3 `npx vitest run src/app/api/trips/[tripId]/itinerary` passes
+- [x] 2.4 `npm test` passes
+- [x] 2.5 `npx tsc --noEmit` passes
 
 #### Manual
 
-- [ ] 2.6 Test names make Risk #2 (no partial persist) and Risk #3 (incomplete never written) obvious
+- [x] 2.6 Test names make Risk #2 (no partial persist) and Risk #3 (incomplete never written) obvious
 
 ### Phase 3: Cookbook + §2 Risk #2 correction
 
