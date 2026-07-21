@@ -258,29 +258,29 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 1.1 Harness typechecks; `verification_tokens` present in `makeTestDb` DDL
-- [x] 1.2 Existing trip route tests still pass
-- [x] 1.3 `npx tsc --noEmit` passes
-- [x] 1.4 `npm test` passes
+- [x] 1.1 Harness typechecks; `verification_tokens` present in `makeTestDb` DDL — f0b8ba6
+- [x] 1.2 Existing trip route tests still pass — f0b8ba6
+- [x] 1.3 `npx tsc --noEmit` passes — f0b8ba6
+- [x] 1.4 `npm test` passes — f0b8ba6
 
 #### Manual
 
-- [x] 1.5 `seedUser` + token helper API is obvious for auth `beforeEach` without re-reading research
+- [x] 1.5 `seedUser` + token helper API is obvious for auth `beforeEach` without re-reading research — f0b8ba6
 
 ### Phase 2: Forgot-password + reset-password route tests
 
 #### Automated
 
-- [ ] 2.1 Forgot-password parity cases (known / unknown / send-fail) all return identical 200 `{ ok: true }`
-- [ ] 2.2 Reset forged / expired / reused return 400 with the generic invalid-link error
-- [ ] 2.3 Successful reset updates `password_hash` and removes the token row
-- [ ] 2.4 `npx vitest run src/app/api/auth` passes
-- [ ] 2.5 `npm test` passes
-- [ ] 2.6 `npx tsc --noEmit` passes
+- [x] 2.1 Forgot-password parity cases (known / unknown / send-fail) all return identical 200 `{ ok: true }`
+- [x] 2.2 Reset forged / expired / reused return 400 with the generic invalid-link error
+- [x] 2.3 Successful reset updates `password_hash` and removes the token row
+- [x] 2.4 `npx vitest run src/app/api/auth` passes
+- [x] 2.5 `npm test` passes
+- [x] 2.6 `npx tsc --noEmit` passes
 
 #### Manual
 
-- [ ] 2.7 Test names make Risk #4 (enumeration + token replay) obvious without reading research
+- [x] 2.7 Test names make Risk #4 (enumeration + token replay) obvious without reading research
 
 ### Phase 3: Delete-account route tests
 
