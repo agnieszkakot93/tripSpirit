@@ -287,9 +287,9 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 4.1 §6.2 and §6.3 document the shipped harness (no TBD for trip routes)
-- [x] 4.2 `npm test` still passes
+- [x] 4.1 §6.2 and §6.3 document the shipped harness (no TBD for trip routes) — 0a54d5f
+- [x] 4.2 `npm test` still passes — 0a54d5f
 
 #### Manual
 
-- [x] 4.3 Fresh-agent check: §6 alone is enough to add a trip-like route test
+- [x] 4.3 Fresh-agent check: §6 alone is enough to add a trip-like route test — 0a54d5f

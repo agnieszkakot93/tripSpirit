@@ -1,7 +1,7 @@
 ---
 change_id: testing-trip-api-contract-ownership
 title: Trip API contract & ownership — integration tests + route harness bootstrap
-status: implementing
+status: implemented
 created: 2026-07-10
 updated: 2026-07-21
 archived_at: null
@@ -26,4 +26,4 @@ Decisions (from planning):
 Phase 1 (harness) landed: `src/test/route-harness.ts` — 6923fb1
 Phase 2 (auth + ownership) landed: trip `route.test.ts` files — 0a2e1e4
 Phase 3 (persistence + validation) landed — b40784a
-Phase 4 (cookbook §6.2 / §6.3 / §6.6) landing
+Phase 4 (cookbook §6.2 / §6.3 / §6.6) landed — 0a54d5f
