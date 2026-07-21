@@ -22,3 +22,5 @@ Decisions (from planning):
 - Harness: direct handler + vi.mock auth/db + in-memory better-sqlite3
 - Ownership: wrong-owner GET + PATCH + DELETE (DB unchanged oracle)
 - Colocated `route.test.ts`; fill cookbook §6.2/§6.3; leave stale auth-edge comment alone
+
+Phase 1 (harness) landed: `src/test/route-harness.ts` — 6923fb1

@@ -247,27 +247,27 @@ None. Test-only change; no schema or runtime behavior changes.
 
 #### Automated
 
-- [x] 1.1 Helpers module exists and typechecks
-- [x] 1.2 Smoke import resolves harness via `@` alias without Vitest config breakage
-- [x] 1.3 `npx tsc --noEmit` passes
-- [x] 1.4 `npm test` still passes existing unit tests
+- [x] 1.1 Helpers module exists and typechecks — 6923fb1
+- [x] 1.2 Smoke import resolves harness via `@` alias without Vitest config breakage — 6923fb1
+- [x] 1.3 `npx tsc --noEmit` passes — 6923fb1
+- [x] 1.4 `npm test` still passes existing unit tests — 6923fb1
 
 #### Manual
 
-- [x] 1.5 Helper API is obvious for a 5-line beforeEach without re-reading research
+- [x] 1.5 Helper API is obvious for a 5-line beforeEach without re-reading research — 6923fb1
 
 ### Phase 2: Auth + ownership route cases
 
 #### Automated
 
-- [ ] 2.1 Unauthenticated and wrong-owner cases land in colocated route tests
-- [ ] 2.2 `npx vitest run src/app/api/trips` passes
-- [ ] 2.3 `npm test` passes
-- [ ] 2.4 `npx tsc --noEmit` passes
+- [x] 2.1 Unauthenticated and wrong-owner cases land in colocated route tests
+- [x] 2.2 `npx vitest run src/app/api/trips` passes
+- [x] 2.3 `npm test` passes
+- [x] 2.4 `npx tsc --noEmit` passes
 
 #### Manual
 
-- [ ] 2.5 Test names make Risks #1 and #5 (API) obvious
+- [x] 2.5 Test names make Risks #1 and #5 (API) obvious
 
 ### Phase 3: Persistence + validation route cases
 
