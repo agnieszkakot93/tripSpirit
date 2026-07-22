@@ -244,28 +244,28 @@ Document e2e pattern and mark test-plan Phase 4 complete.
 
 #### Automated
 
-- [x] 1.1 `npm run check` passes locally
-- [x] 1.2 Workflow file validates (YAML syntax)
-- [x] 1.3 `npm run lint`, `typecheck`, `test`, `build`, `build:cf` all pass
+- [x] 1.1 `npm run check` passes locally — 633fa90
+- [x] 1.2 Workflow file validates (YAML syntax) — 633fa90
+- [x] 1.3 `npm run lint`, `typecheck`, `test`, `build`, `build:cf` all pass — 633fa90
 
 #### Manual
 
-- [x] 1.4 Workflow triggers on PR in GitHub UI (after push)
+- [x] 1.4 Workflow triggers on PR in GitHub UI (after push) — 633fa90
 
 ### Phase 2: Playwright e2e smoke
 
 #### Automated
 
-- [ ] 2.1 `npm run e2e` passes locally with fixture env
-- [ ] 2.2 Redirect spec covers `/trips` and `/profile` unauthenticated redirect
-- [ ] 2.3 Critical-path spec completes without real OpenAI
-- [ ] 2.4 `npm test` still passes
-- [ ] 2.5 `npx tsc --noEmit` passes
+- [x] 2.1 `npm run e2e` passes locally with fixture env
+- [x] 2.2 Redirect spec covers `/trips` and `/profile` unauthenticated redirect
+- [x] 2.3 Critical-path spec completes without real OpenAI
+- [x] 2.4 `npm test` still passes
+- [x] 2.5 `npx tsc --noEmit` passes
 
 #### Manual
 
-- [ ] 2.6 Test titles make Risk #5 and critical-path intent obvious
-- [ ] 2.7 Editor appears after generate without manual refresh
+- [x] 2.6 Test titles make Risk #5 and critical-path intent obvious
+- [x] 2.7 Editor appears after generate without manual refresh
 
 ### Phase 3: Cookbook + rollout notes
 

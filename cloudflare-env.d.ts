@@ -12,6 +12,8 @@ declare namespace Cloudflare {
 		AUTH_URL: string;
 		AUTH_TRUST_HOST: string;
 		OPENAI_API_KEY: string;
+		/** Dev/CI only — never set on production Worker. Enables fixture itinerary stream. */
+		E2E_ITINERARY_FIXTURE?: string;
 		RESEND_API_KEY?: string;
 		WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
 		// Cloudflare Email Sending. Optional: absent in local dev (no send_email
