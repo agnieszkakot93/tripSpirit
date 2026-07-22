@@ -336,7 +336,25 @@ async function flushWaitUntil() {
   `workers: 1`, `fullyParallel: false`).
 - **Location**: `e2e/<name>.spec.ts`. Reference specs:
   `e2e/critical-path.spec.ts` (full happy path),
-  `e2e/auth-redirect.spec.ts` (Risk #5 page redirect matrix).
+  `e2e/auth-redirect.spec.ts` (Risk #5 page redirect matrix),
+  `e2e/trips-list.spec.ts` (minimal authenticated smoke — no fixture).
+- **Minimal skeleton**:
+
+```ts
+import { expect, test } from "@playwright/test";
+// Redirect matrix only:
+// import { injectOpenNextInitialUrlHeader } from "./helpers";
+
+test.describe("…", () => {
+  // test.beforeEach(async ({ page }) => {
+  //   await injectOpenNextInitialUrlHeader(page);
+  // });
+  test("…", async ({ page }) => {
+    await page.goto("/login");
+    // …
+  });
+});
+```
 - **Server target**: the config `webServer` mirrors `scripts/dev-local.sh` —
   it runs `wrangler d1 migrations apply tripsprint-ai-db --local` then
   `next dev --webpack -p 3000`. `reuseExistingServer: !process.env.CI`, so
@@ -372,6 +390,22 @@ async function flushWaitUntil() {
   the redirect matches production Worker behavior without touching the layout.
 - **Auth**: register via the UI Register tab with a unique email per run
   (`e2e-<name>-${Date.now()}@example.com`) — no seeding/fixtures for users.
+  After register, expect `/trips` and the empty-workspace heading
+  (`/Plan your first city break/i`).
+- **Create form defaults**: trip duration defaults to **3 days** — specs that
+  exercise generate + fixture should expect Day 1–3 accordions unless the
+  duration field is changed in the modal.
+- **Save flow**: `ItineraryEditor` hides "Save changes" until a field is
+  dirty — edit a textbox, then click Save; assert the button disappears
+  before reload (reference: `critical-path.spec.ts`).
+- **Itinerary editor locators**: day accordions →
+  `getByRole("button", { name: /Day N/i })`; activity name fields → textboxes
+  inside `li` elements that contain a "Remove activity" button, scoped with
+  `getByRole("main")`.
+- **Redirect helper** (unauthenticated protected-route tests only): import
+  `injectOpenNextInitialUrlHeader` from `e2e/helpers.ts` and call it in
+  `test.beforeEach`. Authenticated flows (register → `/trips`) do **not** need
+  the helper.
 - **CI**: `.github/workflows/ci.yml` `e2e` job (needs `quality`) installs
   `chromium` via `npx playwright install --with-deps chromium`, writes
   `.dev.vars` (generated `AUTH_SECRET` + `E2E_ITINERARY_FIXTURE=true`, no

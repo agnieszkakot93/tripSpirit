@@ -277,4 +277,4 @@ Document e2e pattern and mark test-plan Phase 4 complete.
 
 #### Manual
 
-- [ ] 3.4 Fresh-agent check: §6.5 alone is enough to add browser smoke
+- [x] 3.4 Fresh-agent check: §6.5 alone is enough to add browser smoke
