@@ -29,7 +29,7 @@ TripSprint AI helps people planning a city break spend less time jumping between
 
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |---|---|---|---|---|---|
-| S-01 | `auth-shell` | land on the public landing page; sign up, sign in, sign out; be redirected to sign-in when accessing any protected page without a session | — | FR-001, FR-002, FR-003, FR-013, FR-014, US-03 | ready |
+| S-01 | `auth-shell` | land on the public landing page; sign up, sign in, sign out; be redirected to sign-in when accessing any protected page without a session | — | FR-001, FR-002, FR-003, FR-013, FR-014, US-03 | done |
 | S-02 | `trip-creation-and-list` | create a trip and see their saved trips | S-01 | FR-004, FR-005, FR-006 | done |
 | S-03 | `ai-itinerary-generation` | generate and view a day-by-day AI itinerary for a trip | S-02 | FR-009, FR-010, US-01 | done |
 | S-04 | `trip-edit-and-delete` | edit trip details and delete a trip | S-02 | FR-007, FR-008 | done |
@@ -72,7 +72,7 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Auth infrastructure is present in the baseline (Auth.js v5 + Credentials + D1 adapter; partial route guard for `/trips` in `src/proxy.ts`). This slice completes the auth shell: (1) build the public landing page at `/`, (2) wire sign-up and sign-in UI, (3) extend route protection from `/trips` only to all protected routes. Primary risk is that the credentials flow or full route guard needs adjustment under the Cloudflare edge runtime — verify under `npm run preview:cf` before marking done. No downstream slice should start until this slice is closed: every other slice assumes a session-gated surface.
-- **Status:** ready
+- **Status:** done
 
 ---
 
@@ -167,6 +167,7 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 ## Done
 
 - **S-05: user can edit the text of an activity in a generated itinerary and save the changes; original AI-estimated costs are preserved and displayed with disclaimer** — Archived 2026-07-09 → `context/archive/2026-06-15-itinerary-activity-edit/`. Lesson: —.
+- **S-01: user can land on a public landing page with entry points to sign in and sign up; create an account; sign in with email and password; sign out; and — when navigating to any protected page without a session — be automatically redirected to the sign-in page** — Archived 2026-07-22 → `context/archive/2026-06-09-s-01/` (change folder `s-01`; roadmap Change ID `auth-shell`). Lesson: —.
 - **S-02: user can submit a trip form (destination city, duration, budget) and see the resulting trip in a list; can open a saved trip** — Archived 2026-07-22 → `context/archive/2026-06-10-trip-creation-and-list/`. Lesson: —.
 - **S-03: user can trigger AI generation for a saved trip and see a day-by-day itinerary with per-day activities and approximate cost estimates, with a visible loading state during generation and an error message if generation exceeds 30 seconds** — Archived 2026-07-22 → `context/archive/2026-06-13-ai-itinerary-generation/`. Lesson: —.
 - **S-04: user can update a trip's destination city, duration, or budget, and can delete a trip permanently** — Archived 2026-07-22 → `context/archive/2026-06-14-trip-edit-and-delete/`. Lesson: —.
