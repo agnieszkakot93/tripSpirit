@@ -3,7 +3,7 @@ project: TripSprint AI
 version: 1
 status: draft
 created: 2026-06-07
-updated: 2026-07-09
+updated: 2026-07-22
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -30,9 +30,9 @@ TripSprint AI helps people planning a city break spend less time jumping between
 | ID | Change ID | Outcome (user can …) | Prerequisites | PRD refs | Status |
 |---|---|---|---|---|---|
 | S-01 | `auth-shell` | land on the public landing page; sign up, sign in, sign out; be redirected to sign-in when accessing any protected page without a session | — | FR-001, FR-002, FR-003, FR-013, FR-014, US-03 | ready |
-| S-02 | `trip-creation-and-list` | create a trip and see their saved trips | S-01 | FR-004, FR-005, FR-006 | proposed |
-| S-03 | `ai-itinerary-generation` | generate and view a day-by-day AI itinerary for a trip | S-02 | FR-009, FR-010, US-01 | proposed |
-| S-04 | `trip-edit-and-delete` | edit trip details and delete a trip | S-02 | FR-007, FR-008 | proposed |
+| S-02 | `trip-creation-and-list` | create a trip and see their saved trips | S-01 | FR-004, FR-005, FR-006 | done |
+| S-03 | `ai-itinerary-generation` | generate and view a day-by-day AI itinerary for a trip | S-02 | FR-009, FR-010, US-01 | done |
+| S-04 | `trip-edit-and-delete` | edit trip details and delete a trip | S-02 | FR-007, FR-008 | done |
 | S-05 | `itinerary-activity-edit` | edit an activity in an itinerary and save the changes | S-03 | FR-011, FR-012, US-02 | done |
 
 ## Streams
@@ -87,7 +87,7 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 - **Unknowns:**
   - What does the trip card in the list show — destination only, or also duration and budget? — Owner: user. Block: no.
 - **Risk:** The `trips` table exists in the schema, but no trip API routes are wired yet. This slice introduces all trip CRUD routes. Sequenced before generation because the generation route (S-03) needs a `tripId` to attach the itinerary to; skipping this creates an unplannable dependency.
-- **Status:** proposed
+- **Status:** done
 
 ---
 
@@ -103,7 +103,7 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
   - What prompt shape produces a consistently useful itinerary (activity variety, cost accuracy, day balance)? — Owner: team. Block: no (implementation concern for `/10x-plan`).
   - PRD Open Question 2: what makes TripSprint AI's output different from a generic AI tool? — Owner: user. Block: no (useful for prompt design, not blocking generation).
 - **Risk:** This is the riskiest slice — the 30-second NFR sits at the Cloudflare edge runtime's timeout ceiling. `OPENAI_API_KEY` is set as a Worker secret. Streaming responses are the standard mitigation; if the AI call exceeds the limit, the error path must be reliable. Sequenced as early as S-02 allows because this is the validation milestone.
-- **Status:** proposed
+- **Status:** done
 
 ---
 
@@ -118,7 +118,7 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 - **Unknowns:**
   - When a trip is deleted, its generated itinerary disappears via cascade delete — worth surfacing as a UI disclosure before the user confirms. — Owner: team. Block: no.
 - **Risk:** Editing trip inputs (city, duration, budget) does not recalculate the itinerary (PRD §Non-Goals: no regeneration). The UI must make this clear so users don't expect updated estimates after editing. Parallel with S-03; no dependency between them after S-02 lands.
-- **Status:** proposed
+- **Status:** done
 
 ---
 
@@ -167,3 +167,6 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 ## Done
 
 - **S-05: user can edit the text of an activity in a generated itinerary and save the changes; original AI-estimated costs are preserved and displayed with disclaimer** — Archived 2026-07-09 → `context/archive/2026-06-15-itinerary-activity-edit/`. Lesson: —.
+- **S-02: user can submit a trip form (destination city, duration, budget) and see the resulting trip in a list; can open a saved trip** — Archived 2026-07-22 → `context/archive/2026-06-10-trip-creation-and-list/`. Lesson: —.
+- **S-03: user can trigger AI generation for a saved trip and see a day-by-day itinerary with per-day activities and approximate cost estimates, with a visible loading state during generation and an error message if generation exceeds 30 seconds** — Archived 2026-07-22 → `context/archive/2026-06-13-ai-itinerary-generation/`. Lesson: —.
+- **S-04: user can update a trip's destination city, duration, or budget, and can delete a trip permanently** — Archived 2026-07-22 → `context/archive/2026-06-14-trip-edit-and-delete/`. Lesson: —.

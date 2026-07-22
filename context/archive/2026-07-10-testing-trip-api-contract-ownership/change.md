@@ -1,10 +1,10 @@
 ---
 change_id: testing-trip-api-contract-ownership
 title: Trip API contract & ownership — integration tests + route harness bootstrap
-status: impl_reviewed
+status: archived
 created: 2026-07-10
-updated: 2026-07-21
-archived_at: null
+updated: 2026-07-22
+archived_at: 2026-07-22T15:18:43Z
 ---
 
 ## Notes

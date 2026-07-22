@@ -1,11 +1,11 @@
 ---
 change_id: trip-edit-and-delete
 title: Edit trip details and delete a trip (S-04)
-status: implemented
+status: archived
 created: 2026-06-14
-updated: 2026-06-15
+updated: 2026-07-22
 
-archived_at: null
+archived_at: 2026-07-22T15:18:43Z
 ---
 
 ## Notes

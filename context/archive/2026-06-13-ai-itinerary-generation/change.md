@@ -1,11 +1,11 @@
 ---
 change_id: ai-itinerary-generation
 title: AI itinerary generation and view (S-03)
-status: impl_reviewed
+status: archived
 created: 2026-06-13
-updated: 2026-06-14
+updated: 2026-07-22
 
-archived_at: null
+archived_at: 2026-07-22T15:18:43Z
 ---
 
 ## Notes

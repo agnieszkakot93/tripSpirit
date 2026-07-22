@@ -1,10 +1,10 @@
 ---
 change_id: critical-path
 title: Critical-path e2e smoke and CI gate
-status: implemented
+status: archived
 created: 2026-07-21
 updated: 2026-07-22
-archived_at: null
+archived_at: 2026-07-22T15:18:43Z
 ---
 
 ## Notes

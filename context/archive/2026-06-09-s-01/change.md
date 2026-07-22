@@ -1,10 +1,10 @@
 ---
 change_id: s-01
 title: Auth shell: landing page, sign-up / sign-in / sign-out, full route protection
-status: impl_reviewed
+status: archived
 created: 2026-06-09
-updated: 2026-06-11
-archived_at: null
+updated: 2026-07-22
+archived_at: 2026-07-22T15:18:43Z
 ---
 
 ## Notes
