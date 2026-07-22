@@ -10,8 +10,36 @@ import {
   buildItinerarySchemaForDuration,
   isItineraryCompleteForDuration,
   itinerarySchema,
+  type Itinerary,
 } from "@/lib/trips/itinerary";
 import { getTripForUser, updateItinerary, updateTripItinerary } from "@/lib/trips/queries";
+
+/** Deterministic itinerary for e2e — same shape as Vitest `sampleItinerary`. */
+function sampleItinerary(dayCount: number): Itinerary {
+  return {
+    days: Array.from({ length: dayCount }, (_, i) => ({
+      day: i + 1,
+      title: `Day ${i + 1}`,
+      activities: [
+        {
+          name: "Activity",
+          description: "Description",
+          approxCostEur: 10,
+        },
+      ],
+    })),
+    totalApproxCostEur: dayCount * 10,
+  };
+}
+
+function fixtureTextStreamResponse(itinerary: Itinerary): Response {
+  // Matches streamObject().toTextStreamResponse(): plain JSON text chunks that
+  // accumulate into a complete object for useObject.
+  return new Response(JSON.stringify(itinerary), {
+    status: 200,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
 
 export async function PATCH(
   request: Request,
@@ -67,9 +95,6 @@ export async function POST(
     // Read the key + execution context from the Cloudflare env binding — never
     // process.env (it is not reliably populated on the workerd runtime).
     const { env, ctx } = await getAppCloudflareContext();
-    if (!env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: "Internal error" }, { status: 500 });
-    }
     const db = await getDb();
 
     const trip = await getTripForUser(db, userId, tripId);
@@ -83,6 +108,21 @@ export async function POST(
         { error: "Itinerary already generated" },
         { status: 409 },
       );
+    }
+
+    // Dev/CI-only: skip OpenAI and return a canned stream while still running
+    // the normal persist path (onFinish equivalent). Never set on production.
+    if (env.E2E_ITINERARY_FIXTURE === "true") {
+      const fixture = sampleItinerary(trip.durationDays);
+      if (!isItineraryCompleteForDuration(fixture, trip.durationDays)) {
+        return NextResponse.json({ error: "Internal error" }, { status: 500 });
+      }
+      ctx.waitUntil(updateTripItinerary(db, userId, tripId, fixture));
+      return fixtureTextStreamResponse(fixture);
+    }
+
+    if (!env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "Internal error" }, { status: 500 });
     }
 
     const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY });
