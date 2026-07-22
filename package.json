@@ -24,7 +24,6 @@
     "@ai-sdk/openai": "^3.0.71",
     "@ai-sdk/react": "^3.0.207",
     "@auth/d1-adapter": "^1.11.2",
-    "@cloudflare/workerd-darwin-arm64": "^1.20260708.1",
     "@noble/hashes": "^2.2.0",
     "@opennextjs/cloudflare": "^1.19.11",
     "ai": "^6.0.205",
