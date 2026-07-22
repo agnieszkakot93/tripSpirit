@@ -112,6 +112,14 @@ function patchRequest(tripId: string, body: unknown) {
   });
 }
 
+function patchRawRequest(tripId: string, body: string) {
+  return new Request(`http://localhost/api/trips/${tripId}/itinerary`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
+}
+
 async function flushWaitUntil() {
   await Promise.all([...waitUntilPromises]);
   waitUntilPromises.length = 0;
@@ -239,5 +247,80 @@ describe("/api/trips/[tripId]/itinerary — generation + shape contract", () => 
     const row = await getTripForUser(db, "u1", tripId);
     expect(row?.itineraryJson).not.toBeNull();
     expect(JSON.parse(row!.itineraryJson!)).toEqual(complete);
+  });
+});
+
+describe("/api/trips/[tripId]/itinerary — PATCH ownership + persist (Risk #6)", () => {
+  let db: AppDatabase;
+  let tripId: string;
+  let setSession: (session: MockSession) => void;
+  const initialItinerary = sampleItinerary(TRIP_DURATION_DAYS);
+
+  beforeEach(async () => {
+    ({ db, setSession } = setupRouteTest());
+    seedUser(db, "u1");
+    seedUser(db, "u2");
+    const trip = await seedTrip(db, "u1", {
+      destination: "Lisbon",
+      durationDays: TRIP_DURATION_DAYS,
+      budgetAmount: 1000,
+    });
+    tripId = trip.id;
+    await updateTripItinerary(db, "u1", tripId, initialItinerary);
+  });
+
+  it("PATCH as wrong owner returns 404 and leaves itinerary_json unchanged", async () => {
+    setSession({ user: { id: "u2" } });
+    const edited = sampleItinerary(TRIP_DURATION_DAYS);
+    edited.days[0]!.activities[0]!.name = "Hijacked";
+
+    const res = await PATCH(patchRequest(tripId, edited), tripParams(tripId));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Not found" });
+
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(JSON.parse(row!.itineraryJson!)).toEqual(initialItinerary);
+  });
+
+  it("PATCH for a missing trip returns 404", async () => {
+    setSession({ user: { id: "u1" } });
+    const missingTripId = "00000000-0000-4000-8000-000000000000";
+
+    const res = await PATCH(
+      patchRequest(missingTripId, initialItinerary),
+      tripParams(missingTripId),
+    );
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Not found" });
+  });
+
+  it("PATCH returns 400 for invalid JSON or itinerary shape", async () => {
+    setSession({ user: { id: "u1" } });
+
+    const badJson = await PATCH(patchRawRequest(tripId, "{"), tripParams(tripId));
+    expect(badJson.status).toBe(400);
+    expect(await badJson.json()).toEqual({ error: "Invalid JSON body" });
+
+    const emptyDays = await PATCH(patchRequest(tripId, { days: [] }), tripParams(tripId));
+    expect(emptyDays.status).toBe(400);
+    expect(await emptyDays.json()).toEqual({ error: "Invalid itinerary" });
+
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(JSON.parse(row!.itineraryJson!)).toEqual(initialItinerary);
+  });
+
+  it("PATCH as owner returns 204 and DB read-back reflects the saved itinerary", async () => {
+    setSession({ user: { id: "u1" } });
+    const updated = sampleItinerary(TRIP_DURATION_DAYS);
+    updated.days[0]!.activities[0]!.name = "Edited Belem walk";
+    updated.days[0]!.activities[0]!.approxCostEur = 25;
+    updated.totalApproxCostEur = 85;
+
+    const res = await PATCH(patchRequest(tripId, updated), tripParams(tripId));
+    expect(res.status).toBe(204);
+    expect(res.body).toBeNull();
+
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(JSON.parse(row!.itineraryJson!)).toEqual(updated);
   });
 });
