@@ -21,7 +21,7 @@ ci: GitHub Actions + cloudflare/wrangler-action@v3
   - `.github/workflows/deploy.yml` — after green CI on `main`: remote D1 migrate → `build:cf` → `deploy:cf`
   - `.github/workflows/preview-cf-smoke.yml` — optional nightly / manual `npm run smoke:cf` (workerd on `:8787`)
 - **Local workerd smoke:** `npm run smoke:cf` (or `SKIP_BUILD=1` after `build:cf`); requires `.dev.vars` with `AUTH_SECRET`, `AUTH_URL=http://localhost:8787`, `AUTH_TRUST_HOST=true`
-- **Next:** Phase 6 production smoke checklist on the live Worker URL (manual verification).
+- **Next:** Phase 6 production smoke — **complete** (verified 2026-07-22 on live Worker).
 
 ---
 
@@ -313,13 +313,13 @@ wrangler secret put AUTH_TRUST_HOST   # value: "true"
 
 Smoke test checklist (run against **`https://tripsprint-ai.agnieszkakot22.workers.dev`**, not `*.pages.dev`):
 
-- [ ] Home page loads on the production Worker URL
-- [ ] Sign up creates a user row in D1: `wrangler d1 execute tripsprint-ai-db --command "SELECT * FROM users LIMIT 5"`
-- [ ] Sign in returns a valid JWT session cookie
-- [ ] Itinerary generation route streams a response within 30 seconds
-- [ ] `wrangler tail --status error` shows no Worker exceptions
-- [ ] Rollback: `wrangler rollback` reverts to prior deployment in <30 s
-- [ ] Preview URL: Cloudflare Access policy for branch previews is configured or disabled as needed
+- [x] Home page loads on the production Worker URL
+- [x] Sign up creates a user row in D1: `npx wrangler d1 execute tripsprint-ai-db --remote --command "SELECT id, email FROM users ORDER BY rowid DESC LIMIT 5;"`
+- [x] Sign in returns a valid JWT session cookie
+- [x] Itinerary generation route streams a response within 30 seconds
+- [x] `wrangler tail --status error` shows no Worker exceptions
+- [x] Rollback: `wrangler rollback` reverts to prior deployment in <30 s
+- [x] Preview URL: N/A — no PR preview deploys (`main`-only deploy); Cloudflare Access not blocking production URL
 
 ---
 
