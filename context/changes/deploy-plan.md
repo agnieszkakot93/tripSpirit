@@ -11,11 +11,17 @@ ci: GitHub Actions + cloudflare/wrangler-action@v3
 
 ## Current State
 
-- Node.js v20.20.0 (nvm) — satisfies Next.js 16's ≥18.18 requirement
-- Homebrew 5.1.14 available
-- `tripSpirit/` git repo: `github.com/agnieszkakot93/tripSpirit` (origin set, no CI yet)
-- **Done (Phase 0–4 + first deploy):** Worker live at **`https://tripsprint-ai.agnieszkakot22.workers.dev`**. Remote D1 `tripsprint-ai-db` (`database_id` in `wrangler.jsonc`) + migration `0000_sleepy_mandrill.sql` applied. **Phase 6:** set Worker secrets (`AUTH_SECRET`, `OPENAI_API_KEY`, `AUTH_TRUST_HOST`, production `AUTH_URL`) so auth and AI work on the public URL.
-- **Next:** Phase 5 — GitHub Actions CI/CD (migrations before deploy). **Local:** copy `tripSpirit/.env.example` → `.env.local`, set `AUTH_SECRET` / keys, then verify auth under `npm run preview:cf` (not only `next dev`).
+- Node.js **22** recommended for CI, Wrangler, and `preview:cf` (see `AGENTS.md`).
+- `tripSpirit/` git repo: `github.com/agnieszkakot93/tripSpirit`
+- **Worker live:** `https://tripsprint-ai.agnieszkakot22.workers.dev` (Workers custom domain; not `*.pages.dev`).
+- **Remote D1:** `tripsprint-ai-db` (`database_id` in `wrangler.jsonc`); migrations applied locally + remotely via deploy workflow.
+- **Secrets (production):** `AUTH_SECRET`, `OPENAI_API_KEY`, `AUTH_TRUST_HOST`, `RESEND_API_KEY` (password reset) — set as Worker secrets; see Phase 6.
+- **CI/CD (Phase 5 — done):**
+  - `.github/workflows/ci.yml` — lint, typecheck, vitest, `build`, `build:cf`, Playwright e2e on PR and `main`
+  - `.github/workflows/deploy.yml` — after green CI on `main`: remote D1 migrate → `build:cf` → `deploy:cf`
+  - `.github/workflows/preview-cf-smoke.yml` — optional nightly / manual `npm run smoke:cf` (workerd on `:8787`)
+- **Local workerd smoke:** `npm run smoke:cf` (or `SKIP_BUILD=1` after `build:cf`); requires `.dev.vars` with `AUTH_SECRET`, `AUTH_URL=http://localhost:8787`, `AUTH_TRUST_HOST=true`
+- **Next:** Phase 6 production smoke checklist on the live Worker URL (manual verification).
 
 ---
 
@@ -224,8 +230,8 @@ wrangler d1 migrations apply tripsprint-ai-db           # apply to remote
 - `tripSpirit/src/lib/auth.ts` — lazy `NextAuth` + `getCloudflareContext({ async: true })` + `D1Adapter(env.DB)`, JWT sessions, Credentials `authorize` via Drizzle + `password_hash`.
 - `tripSpirit/src/lib/password.ts` — `@noble/hashes/scrypt` (async) encode / verify.
 - `tripSpirit/src/app/api/auth/[...nextauth]/route.ts` — `runtime: "edge"`, `GET`/`POST` handlers.
-- `tripSpirit/src/app/api/auth/register/route.ts` — `POST` email/password (edge), Drizzle insert.
-- `tripSpirit/src/proxy.ts` — redirect unauthenticated users from `/trips` → `/login` (Node.js runtime; Next.js 16 `middleware` → `proxy` rename).
+- `tripSpirit/src/app/api/auth/register/route.ts` — `POST` email/password, Drizzle insert.
+- `tripSpirit/src/app/(protected)/layout.tsx` — session guard for all protected routes; builds `/login?callbackUrl=` from `x-opennext-initial-url` (workerd) or `next-url` (`next dev`).
 - `tripSpirit/src/app/login/*`, `tripSpirit/src/components/auth-provider.tsx`, `tripSpirit/src/types/next-auth.d.ts`.
 - `tripSpirit/.env.example` — copy to `.env.local` (gitignored); do **not** commit real secrets.
 
@@ -257,35 +263,44 @@ Verify: sign up and sign in work under `npm run preview:cf` (workerd runtime, no
 - [x] `src/lib/auth.ts` with JWT + Credentials + lazy D1 adapter
 - [x] `src/app/api/auth/[...nextauth]/route.ts` (edge)
 - [x] `src/app/api/auth/register/route.ts` (edge)
-- [x] `src/proxy.ts` protecting `/trips`
+- [x] `(protected)/layout.tsx` route guard (replaced `proxy.ts` — see `context/archive/2026-06-09-s-01/`)
 - [x] Login / register UI + `SessionProvider`
-- [ ] Local smoke: `npm run preview:cf` with populated `.env.local` and D1 (local or remote)
+- [x] Local workerd smoke: `npm run smoke:cf` (`scripts/preview-cf-smoke.sh`) — login, unauth redirect + `callbackUrl`, register → sign-in → `/trips`
 
 ---
 
 ## Phase 5 — GitHub Actions CI/CD
 
-**Key file to create:** `tripSpirit/.github/workflows/deploy.yml`
+**Key files:** `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, `.github/workflows/preview-cf-smoke.yml`
 
 ```bash
-# Add GitHub secrets using the gh CLI (run from tripSpirit/ repo root)
+# GitHub secrets (one-time)
 gh secret set CLOUDFLARE_API_TOKEN --body "<token from Phase 0.6>"
 gh secret set CLOUDFLARE_ACCOUNT_ID --body "<your account ID>"
 ```
 
-`deploy.yml` step order (migrations must run before deploy):
+`ci.yml` — on `pull_request` and push to `main`:
 
 ```
-1. actions/checkout@v4
-2. actions/setup-node@v4
-3. npm ci
-4. cloudflare/wrangler-action@v3 — wrangler d1 migrations apply tripsprint-ai-db
-5. cloudflare/wrangler-action@v3 — opennextjs-cloudflare deploy
+npm ci → lint → typecheck → test → build → build:cf
+e2e job (needs quality): Playwright against next dev + local D1; .dev.vars with AUTH_SECRET + E2E_ITINERARY_FIXTURE
 ```
 
-Trigger: `push` to `main`. Add a separate `preview` job triggered on pull requests.
+`deploy.yml` — after **successful** CI on `main` (or `workflow_dispatch`):
 
----
+```
+checkout → setup-node 22 → npm ci → wrangler d1 migrations apply --remote → build:cf → deploy:cf
+```
+
+`preview-cf-smoke.yml` — nightly + manual: `npm run smoke:cf` (optional §5 pre-prod gate; not on every PR).
+
+### Phase 5 checklist
+
+- [x] `ci.yml` quality + e2e gates on PR and `main`
+- [x] `deploy.yml` migrations-before-deploy on green `main` CI
+- [x] Node 22 in CI and deploy workflows
+- [x] `preview-cf-smoke.yml` for optional workerd smoke
+- [ ] PR preview deployments to Cloudflare (deferred — deploy is `main`-only today)
 
 ## Phase 6 — Secrets, Smoke Test & Verification
 
@@ -296,9 +311,9 @@ wrangler secret put OPENAI_API_KEY
 wrangler secret put AUTH_TRUST_HOST   # value: "true"
 ```
 
-Smoke test checklist:
+Smoke test checklist (run against **`https://tripsprint-ai.agnieszkakot22.workers.dev`**, not `*.pages.dev`):
 
-- [ ] Home page loads on the `.pages.dev` domain
+- [ ] Home page loads on the production Worker URL
 - [ ] Sign up creates a user row in D1: `wrangler d1 execute tripsprint-ai-db --command "SELECT * FROM users LIMIT 5"`
 - [ ] Sign in returns a valid JWT session cookie
 - [ ] Itinerary generation route streams a response within 30 seconds
@@ -331,7 +346,7 @@ Smoke test checklist:
 
 | Risk                                     | Likelihood | Impact | Mitigation                                                                |
 | ---------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------- |
-| `next dev` masks workerd runtime bugs    | High       | High   | Always test D1/auth routes under `npm run preview:cf`, not `next dev`.    |
+| `next dev` masks workerd runtime bugs    | High       | High   | Use `npm run dev:local` or `npm run smoke:cf` (`preview:cf` on :8787), not plain `next dev` alone for D1/auth. |
 | Free plan 10 ms CPU limit                | High       | High   | Workers Paid plan from day one.                                           |
 | Auth.js v5 beta API changes              | Medium     | Medium | Pin `next-auth` to exact beta version; review changelog before upgrading. |
 | D1 migration not applied before deploy   | Medium     | High   | GitHub Actions workflow enforces migration-before-deploy order.           |

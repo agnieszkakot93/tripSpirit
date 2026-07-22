@@ -1,12 +1,12 @@
 ---
 project: TripSprint AI
 version: 1
-status: draft
+status: active
 created: 2026-06-07
 updated: 2026-07-22
 prd_version: 1
 main_goal: speed
-top_blocker: time
+top_blocker: next-slice
 ---
 
 # Roadmap: TripSprint AI
@@ -17,7 +17,7 @@ top_blocker: time
 
 ## Vision recap
 
-TripSprint AI helps people planning a city break spend less time jumping between sites and more time on a coherent day-by-day plan that respects their duration and budget. The June 30 hard deadline is the dominant constraint: ship the full must-have path before the date, in strict dependency order, with no detours. The core product hypothesis — "an AI can turn a destination, a number of days, and a declared budget into a useful itinerary" — is tested by reaching the north star slice on time; everything else either supports that path or is Parked.
+TripSprint AI helps people planning a city break spend less time jumping between sites and more time on a coherent day-by-day plan that respects their duration and budget. The June 30 hard deadline was the original constraint for the must-have path. **As of 2026-07-22, slices S-01–S-05 are shipped** — the core product hypothesis is testable in production. Further work is optional slices and hardening, not dependency-blocked MVP sequencing.
 
 ## North star
 
@@ -41,19 +41,19 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 
 | Stream | Theme | Chain | Note |
 |---|---|---|---|
-| A | Must-have path | `S-01` → `S-02` → `S-03` → `S-05` | Strict must-have sequence to June 30; north star (S-03) sits as early as dependencies allow. Auth shell (S-01) gates every slice below it. |
-| B | Trip management | `S-04` | Branches from `S-02`; parallel with `S-03` — can be planned in a separate agent run once `S-02` lands. |
+| A | Must-have path | `S-01` → `S-02` → `S-03` → `S-05` | **Complete** (all slices `done`). Auth shell gates trip + generation surfaces. |
+| B | Trip management | `S-04` | **Complete** — shipped in parallel with S-03 after S-02. |
 
 ## Baseline
 
-What's already in place in the codebase as of 2026-06-09 (auto-researched + user-confirmed).
-Foundations below assume these are present and do NOT re-scaffold them.
+What's in place in the codebase as of **2026-07-22** (post S-01–S-05). Foundations below are present; do NOT re-scaffold them.
 
-- **Frontend:** present — Next.js ~16.2.7 + React 19 + Tailwind 4; App Router at `src/app/`; `/trips` page is a placeholder stub; `src/components/` has only `auth-provider.tsx`
-- **Backend / API:** partial — auth routes only (`src/app/api/auth/*`); no trip CRUD or AI generation routes wired yet
-- **Data:** present — Drizzle ORM + Cloudflare D1; `users`, `accounts`, `sessions`, `verification_tokens`, `trips` in `src/db/schema.ts`; `trips` includes `itinerary_json` column (nullable text); migration `drizzle/0000_sleepy_mandrill.sql` present
-- **Auth:** present — Auth.js v5 + Credentials + D1 adapter in `src/lib/auth.ts`; JWT session handling (`src/lib/auth.ts:56-65`); route guard for `/trips` in `src/proxy.ts`
-- **Deploy / infra:** present — Cloudflare Pages/Workers via `@opennextjs/cloudflare`; GitHub Actions CI not yet wired
+- **Frontend:** present — Next.js ~16.2.x + React 19 + Tailwind 4; App Router at `src/app/`; landing `/`, auth `/login`, protected `(protected)/` group (`/trips`, `/trips/[tripId]`, `/profile`); shared shell in `src/components/layout/` and trip/itinerary UI in `src/components/`
+- **Backend / API:** present — auth (`src/app/api/auth/*`), trip CRUD (`src/app/api/trips`, `[tripId]`), itinerary generate + PATCH (`src/app/api/trips/[tripId]/itinerary`)
+- **Data:** present — Drizzle ORM + Cloudflare D1; `users`, `accounts`, `sessions`, `verification_tokens`, `trips` in `src/db/schema.ts`; `trips.itinerary_json` for persisted itineraries; migrations under `drizzle/`
+- **Auth:** present — Auth.js v5 + Credentials + D1 adapter (`src/lib/auth.ts`); JWT sessions; route protection via `(protected)/layout.tsx` layout guard (reads `x-opennext-initial-url` on workerd for `callbackUrl`); forgot-password + account deletion routes
+- **Testing:** present — Vitest unit + route integration (`npm test`); Playwright e2e on critical path (`npm run e2e`, CI); optional workerd smoke (`npm run smoke:cf`, nightly workflow). Cookbook: `context/foundation/test-plan.md`
+- **Deploy / infra:** present — Cloudflare Workers via `@opennextjs/cloudflare`; Worker at `https://tripsprint-ai.agnieszkakot22.workers.dev`; GitHub Actions **CI** (`.github/workflows/ci.yml`: lint, typecheck, test, build, build:cf, e2e) and **deploy** (`.github/workflows/deploy.yml`: remote D1 migrate → build:cf → deploy on green `main` CI)
 - **Observability:** absent — no logging library, error tracking, or metrics configured
 
 ## Foundations
@@ -71,7 +71,7 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:** —
-- **Risk:** Auth infrastructure is present in the baseline (Auth.js v5 + Credentials + D1 adapter; partial route guard for `/trips` in `src/proxy.ts`). This slice completes the auth shell: (1) build the public landing page at `/`, (2) wire sign-up and sign-in UI, (3) extend route protection from `/trips` only to all protected routes. Primary risk is that the credentials flow or full route guard needs adjustment under the Cloudflare edge runtime — verify under `npm run preview:cf` before marking done. No downstream slice should start until this slice is closed: every other slice assumes a session-gated surface.
+- **Risk:** Shipped. Auth shell verified under `preview:cf` (layout guard replaced Node middleware; see `context/archive/2026-06-09-s-01/`).
 - **Status:** done
 
 ---
@@ -137,13 +137,17 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
-|---|---|---|---|---|
-| S-01 | `auth-shell` | Auth shell: landing page + sign-up/sign-in/sign-out + full route protection | yes | Auth infrastructure present; extends `proxy.ts` guard to all protected routes, builds landing page. Run `/10x-plan auth-shell` |
-| S-02 | `trip-creation-and-list` | Trip creation form + saved trips list | yes (after S-01) | Run `/10x-plan trip-creation-and-list` |
-| S-03 | `ai-itinerary-generation` | AI itinerary generation + view (north star) | yes (after S-02) | Run `/10x-plan ai-itinerary-generation` |
-| S-04 | `trip-edit-and-delete` | Edit trip details + delete trip | yes (after S-02) | Parallel with S-03; run `/10x-plan trip-edit-and-delete` |
-| S-05 | `itinerary-activity-edit` | Edit and save itinerary activity changes | yes (after S-03) | Run `/10x-plan itinerary-activity-edit` |
+All PRD must-have slices (S-01–S-05) are **done**. Archives under `context/archive/`.
+
+| Roadmap ID | Change ID | Status | Archive / notes |
+|---|---|---|---|
+| S-01 | `auth-shell` | done | `context/archive/2026-06-09-s-01/` (folder `s-01`) |
+| S-02 | `trip-creation-and-list` | done | `context/archive/2026-06-10-trip-creation-and-list/` |
+| S-03 | `ai-itinerary-generation` | done | `context/archive/2026-06-13-ai-itinerary-generation/` |
+| S-04 | `trip-edit-and-delete` | done | `context/archive/2026-06-14-trip-edit-and-delete/` |
+| S-05 | `itinerary-activity-edit` | done | `context/archive/2026-06-15-itinerary-activity-edit/` |
+
+**Next product research (optional):** `context/changes/trip-add-delete-research/` (`preparing`).
 
 ## Open Roadmap Questions
 
@@ -161,8 +165,11 @@ None. All prerequisite layers needed by the first vertical slice (auth, data sch
 - **No maps or geolocation** — Why parked: PRD §Non-Goals; activities are text-only.
 - **No hotel or flight recommendations** — Why parked: PRD §Non-Goals.
 - **No offline support** — Why parked: PRD §Non-Goals.
-- **GitHub Actions CI/CD** — Why parked: not a PRD must-have FR; Worker deploys manually via `wrangler deploy`; add after all must-have slices are planned and the deadline pressure eases.
 - **Observability (logging, error tracking, metrics)** — Why parked: PRD has no uptime SLA for MVP; add when the product is live and generating real traffic.
+
+## Shipped (infra, not roadmap slices)
+
+- **GitHub Actions CI/CD** — `.github/workflows/ci.yml` (quality + e2e on PR/push to `main`), `.github/workflows/deploy.yml` (remote D1 migrate → deploy after green CI on `main`), `.github/workflows/preview-cf-smoke.yml` (optional nightly workerd smoke via `npm run smoke:cf`). Prod verification checklist remains in `context/changes/deploy-plan.md` Phase 6.
 
 ## Done
 
