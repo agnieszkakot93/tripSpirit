@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-21 (Phase 3 cookbook: itinerary generation)
+> Last updated: 2026-07-22 (Phase 4 cookbook: e2e smoke + CI gate)
 
 ## 1. Strategy
 
@@ -77,7 +77,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 1 | Trip API contract & ownership | Prove trip routes enforce ownership + persist saves; bootstrap the API route test harness (none today) | #1, #5, #6 | integration | complete | context/changes/testing-trip-api-contract-ownership/ |
 | 2 | Auth & account-lifecycle routes | Prove reset can't enumerate/replay and deletion needs real auth | #4, #5 | integration | complete | context/changes/testing-auth-account-lifecycle-routes/ |
 | 3 | Itinerary generation & shape contract | Prove generation fails cleanly and never persists a mismatched itinerary | #2, #3 | unit + integration | complete | context/changes/testing-itinerary-generation-shape-contract/ |
-| 4 | Critical-path e2e smoke + CI gate | Prove the sign-in→create→generate→edit path works end-to-end; lock the floor in CI | cross-cutting (#2, #5) | e2e + gates | not started | — |
+| 4 | Critical-path e2e smoke + CI gate | Prove the sign-in→create→generate→edit path works end-to-end; lock the floor in CI | cross-cutting (#2, #5) | e2e + gates | complete | context/changes/critical-path/ |
 
 **Status vocabulary** (fixed — parser literals): `not started` →
 `change opened` → `researched` → `planned` → `implementing` → `complete`.
@@ -92,8 +92,8 @@ The classic test base for this project. AI-native tools (if any) carry a
 | unit + integration | Vitest | 3.x / 4.x (`npm test` → `vitest run`) | Unit tests under `src/lib/trips/`; route integration tests under `src/app/api/trips/` (§6.2) |
 | API / route testing | Vitest + `src/test/route-harness.ts` | — | Direct handler call; `vi.mock` `@/lib/auth` + `@/lib/db`; in-memory better-sqlite3. See §6.2 / §6.3 |
 | external-boundary mocking | Vitest `vi.mock` at module seams | — | AI SDK (`ai.streamObject`) and email (Resend `fetch`) mocked at the import boundary — see §6.2 / §6.4 |
-| e2e | none yet — see §3 Phase 4 | — | Candidate: Playwright, or the in-session Claude Preview / Chrome MCP driving the real dev server |
-| quality gates (CI) | none yet — see §3 Phase 4 | — | GitHub Actions is the stated CI provider (`tech-stack.md`); currently unwired (parked in roadmap) |
+| e2e | Playwright (`@playwright/test`) | 1.x (`npm run e2e` → `playwright test`) | Chromium only; specs under `e2e/`; `webServer` mirrors `dev-local.sh`; generation mocked via `E2E_ITINERARY_FIXTURE`. See §6.5 |
+| quality gates (CI) | GitHub Actions | — | `.github/workflows/ci.yml`: `quality` job (lint → typecheck → test → build → build:cf) + `e2e` job (needs `quality`, no secrets when fixture active). See §5 |
 
 **Stack grounding tools (current session):**
 - Docs: Context7-style docs MCP (`query-docs` / `resolve-library-id`) — available; use for current Vitest, Next 16, and Vercel AI SDK test-setup APIs; checked: 2026-07-10
@@ -110,7 +110,8 @@ The full set of gates that must pass before a change reaches production.
 | lint + typecheck | local + CI | required | syntactic / type drift |
 | unit + integration | local + CI | required after §3 Phase 1 | logic + route regressions |
 | e2e on critical flow | CI on PR | required after §3 Phase 4 | broken sign-in→generate→edit path |
-| build (`npm run build`) | local + CI | required | OpenNext/edge build breakage |
+| build (`npm run build`) | local + CI | required | Next build breakage |
+| build:cf (`npm run build:cf`) | local + CI | required | OpenNext/workerd build breakage that `next build` alone misses |
 | pre-prod smoke | between merge + prod | optional | environment-specific (workerd) failures |
 
 ## 6. Cookbook Patterns
@@ -330,7 +331,51 @@ async function flushWaitUntil() {
 
 ### 6.5 Adding an e2e test
 
-- TBD — see §3 Phase 4.
+- **Tool**: Playwright (`@playwright/test`), Chromium only. Config in
+  `playwright.config.ts` (`testDir: "e2e"`, `baseURL: http://localhost:3000`,
+  `workers: 1`, `fullyParallel: false`).
+- **Location**: `e2e/<name>.spec.ts`. Reference specs:
+  `e2e/critical-path.spec.ts` (full happy path),
+  `e2e/auth-redirect.spec.ts` (Risk #5 page redirect matrix).
+- **Server target**: the config `webServer` mirrors `scripts/dev-local.sh` —
+  it runs `wrangler d1 migrations apply tripsprint-ai-db --local` then
+  `next dev --webpack -p 3000`. `reuseExistingServer: !process.env.CI`, so
+  locally it reuses a running `npm run dev:local`; in CI it starts fresh.
+- **Run locally**: `npm run e2e` (`playwright test`). Requires `.dev.vars`
+  with `AUTH_SECRET`, `AUTH_URL=http://localhost:3000`, `AUTH_TRUST_HOST=true`,
+  and `E2E_ITINERARY_FIXTURE=true`. No `OPENAI_API_KEY` needed when the
+  fixture is active.
+- **Selectors**: accessible only — `getByRole` / `getByPlaceholder` /
+  `getByLabel`. **No `data-testid`** (decision). Scope ambiguous matches with
+  `.getByRole("main")` / `.getByRole("dialog")` (e.g. two "Create trip"
+  buttons — nav vs modal).
+- **Generation seam (fixture)**: do **not** `route.fulfill` the itinerary
+  `POST` from the browser — that skips the Next.js handler, so nothing
+  persists to D1 and the editor never appears. Instead the route honors
+  `env.E2E_ITINERARY_FIXTURE === "true"`
+  (`src/app/api/trips/[tripId]/itinerary/route.ts`): it returns a deterministic
+  fixture stream compatible with `useObject` **and** still runs the normal
+  `onFinish` → `updateTripItinerary` persist path. The flag is dev/CI-only —
+  never set it on the production Worker (see §6.2 migration note in
+  `.env.example`).
+- **Poll after generate**: after clicking "Generate itinerary", `waitUntil`
+  persist + `router.refresh()` race the streaming preview. Poll for the
+  `ItineraryEditor` surface (e.g. `"+ Add activity"` / `"Day N"` accordion
+  headings) with a ≥ 35s budget — do not assume an instant transition.
+- **Assert shape, not prose**: day count, edited field survives reload — never
+  exact AI-generated text (§7).
+- **Redirect specs**: assert the URL contains `/login` and the `callbackUrl`
+  query param — do **not** assert exact `302` vs `307`. Under `next dev` the
+  `(protected)` layout only builds `callbackUrl` when it sees the OpenNext
+  `x-opennext-initial-url` header, which full-document Playwright navigations
+  omit; inject it via `injectOpenNextInitialUrlHeader` (`e2e/helpers.ts`) so
+  the redirect matches production Worker behavior without touching the layout.
+- **Auth**: register via the UI Register tab with a unique email per run
+  (`e2e-<name>-${Date.now()}@example.com`) — no seeding/fixtures for users.
+- **CI**: `.github/workflows/ci.yml` `e2e` job (needs `quality`) installs
+  `chromium` via `npx playwright install --with-deps chromium`, writes
+  `.dev.vars` (generated `AUTH_SECRET` + `E2E_ITINERARY_FIXTURE=true`, no
+  OpenAI secret), and runs `npm run e2e`.
 
 ### 6.6 Per-rollout-phase notes
 
@@ -357,6 +402,17 @@ async function flushWaitUntil() {
   200 empty stream) and Risk #3 wire-up (incomplete never written, complete
   persists). Pattern documented in §6.4. PATCH on this route is 401-only;
   page-layout redirect still deferred to §3 Phase 4 e2e.
+- **§3 Phase 4 — Critical-path e2e smoke + CI gate** (change
+  `critical-path`): wired GitHub Actions quality gates
+  (`lint` → `typecheck` → `test` → `build` → `build:cf`) plus an `e2e` job in
+  `.github/workflows/ci.yml`, and added npm scripts `typecheck`, `check`,
+  `e2e`. Playwright (`e2e/`, `playwright.config.ts`) locks the cross-cutting
+  path: `critical-path.spec.ts` (register → create → generate → edit → save →
+  reload with DB-visible persistence) and `auth-redirect.spec.ts` (Risk #5
+  page redirect matrix — the layout guard finally covered at the browser
+  level, closing the deferral from Phases 1–3). Generation is mocked at the
+  stream boundary via `E2E_ITINERARY_FIXTURE` (dev/CI-only) so the server
+  handler + D1 persist still run without OpenAI. Pattern documented in §6.5.
 
 ## 7. What We Deliberately Don't Test
 

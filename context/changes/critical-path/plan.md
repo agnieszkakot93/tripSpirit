@@ -256,24 +256,24 @@ Document e2e pattern and mark test-plan Phase 4 complete.
 
 #### Automated
 
-- [x] 2.1 `npm run e2e` passes locally with fixture env
-- [x] 2.2 Redirect spec covers `/trips` and `/profile` unauthenticated redirect
-- [x] 2.3 Critical-path spec completes without real OpenAI
-- [x] 2.4 `npm test` still passes
-- [x] 2.5 `npx tsc --noEmit` passes
+- [x] 2.1 `npm run e2e` passes locally with fixture env — 5cdbe66
+- [x] 2.2 Redirect spec covers `/trips` and `/profile` unauthenticated redirect — 5cdbe66
+- [x] 2.3 Critical-path spec completes without real OpenAI — 5cdbe66
+- [x] 2.4 `npm test` still passes — 5cdbe66
+- [x] 2.5 `npx tsc --noEmit` passes — 5cdbe66
 
 #### Manual
 
-- [x] 2.6 Test titles make Risk #5 and critical-path intent obvious
-- [x] 2.7 Editor appears after generate without manual refresh
+- [x] 2.6 Test titles make Risk #5 and critical-path intent obvious — 5cdbe66
+- [x] 2.7 Editor appears after generate without manual refresh — 5cdbe66
 
 ### Phase 3: Cookbook + rollout notes
 
 #### Automated
 
-- [ ] 3.1 §6.5 documents e2e setup (no TBD)
-- [ ] 3.2 §3 Phase 4 marked complete with change folder
-- [ ] 3.3 `npm run check` and `npm run e2e` still pass
+- [x] 3.1 §6.5 documents e2e setup (no TBD)
+- [x] 3.2 §3 Phase 4 marked complete with change folder
+- [x] 3.3 `npm run check` and `npm run e2e` still pass
 
 #### Manual
 
