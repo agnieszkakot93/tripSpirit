@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-07-22 (Phase 4 cookbook: e2e smoke + CI gate)
+> Last updated: 2026-07-22 (§3 archive paths reconciled)
 
 ## 1. Strategy
 
@@ -68,16 +68,16 @@ padded here.
 
 ## 3. Phased Rollout
 
-Each row is a discrete rollout phase that will open its own change folder
-via `/10x-new`. Status moves left-to-right through the values below; the
-orchestrator updates Status as artifacts appear on disk.
+Each row is a discrete rollout phase that opened its own change folder via
+`/10x-new`. Completed phases are archived under `context/archive/`; the
+**Change folder** column points at the archive path once `status: complete`.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|-----------|------------------|----------------|------------|--------|---------------|
-| 1 | Trip API contract & ownership | Prove trip routes enforce ownership + persist saves; bootstrap the API route test harness (none today) | #1, #5, #6 | integration | complete | context/changes/testing-trip-api-contract-ownership/ |
-| 2 | Auth & account-lifecycle routes | Prove reset can't enumerate/replay and deletion needs real auth | #4, #5 | integration | complete | context/changes/testing-auth-account-lifecycle-routes/ |
-| 3 | Itinerary generation & shape contract | Prove generation fails cleanly and never persists a mismatched itinerary | #2, #3 | unit + integration | complete | context/changes/testing-itinerary-generation-shape-contract/ |
-| 4 | Critical-path e2e smoke + CI gate | Prove the sign-in→create→generate→edit path works end-to-end; lock the floor in CI | cross-cutting (#2, #5) | e2e + gates | complete | context/changes/critical-path/ |
+| 1 | Trip API contract & ownership | Prove trip routes enforce ownership + persist saves; bootstrap the API route test harness (none today) | #1, #5, #6 | integration | complete | `context/archive/2026-07-10-testing-trip-api-contract-ownership/` |
+| 2 | Auth & account-lifecycle routes | Prove reset can't enumerate/replay and deletion needs real auth | #4, #5 | integration | complete | `context/archive/2026-07-21-testing-auth-account-lifecycle-routes/` |
+| 3 | Itinerary generation & shape contract | Prove generation fails cleanly and never persists a mismatched itinerary | #2, #3 | unit + integration | complete | `context/archive/2026-07-21-testing-itinerary-generation-shape-contract/` |
+| 4 | Critical-path e2e smoke + CI gate | Prove the sign-in→create→generate→edit path works end-to-end; lock the floor in CI | cross-cutting (#2, #5) | e2e + gates | complete | `context/archive/2026-07-21-critical-path/` |
 
 **Status vocabulary** (fixed — parser literals): `not started` →
 `change opened` → `researched` → `planned` → `implementing` → `complete`.
@@ -468,7 +468,7 @@ unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-07-10
+- Strategy (§1–§5) last reviewed: 2026-07-22
 - Stack versions last verified: 2026-07-10
 - AI-native tool references last verified: 2026-07-10
 
