@@ -1,0 +1,36 @@
+name: Preview CF smoke
+
+# Optional §5 pre-prod gate — workerd/OpenNext runtime, not every PR.
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: preview:cf workerd smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Write .dev.vars for preview smoke
+        run: |
+          {
+            echo "AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "AUTH_URL=http://localhost:8787"
+            echo "AUTH_TRUST_HOST=true"
+          } > .dev.vars
+
+      - name: Run preview:cf smoke
+        run: npm run smoke:cf

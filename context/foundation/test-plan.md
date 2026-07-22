@@ -112,7 +112,7 @@ The full set of gates that must pass before a change reaches production.
 | e2e on critical flow | CI on PR | required after §3 Phase 4 | broken sign-in→generate→edit path |
 | build (`npm run build`) | local + CI | required | Next build breakage |
 | build:cf (`npm run build:cf`) | local + CI | required | OpenNext/workerd build breakage that `next build` alone misses |
-| pre-prod smoke | between merge + prod | optional | environment-specific (workerd) failures |
+| pre-prod smoke (`npm run smoke:cf`) | nightly / manual | optional | workerd/OpenNext runtime failures (`x-opennext-initial-url`, layout guard) that `next dev` e2e misses |
 
 ## 6. Cookbook Patterns
 
@@ -447,6 +447,14 @@ test.describe("…", () => {
   level, closing the deferral from Phases 1–3). Generation is mocked at the
   stream boundary via `E2E_ITINERARY_FIXTURE` (dev/CI-only) so the server
   handler + D1 persist still run without OpenAI. Pattern documented in §6.5.
+- **Optional pre-prod — `preview:cf` workerd smoke** (`scripts/preview-cf-smoke.sh`,
+  `npm run smoke:cf`, `.github/workflows/preview-cf-smoke.yml`): after
+  `npm run build:cf`, starts `preview:cf` on `:8787` and curls `/login`,
+  unauthenticated `/trips` → `/login?callbackUrl=%2Ftrips` (real
+  `x-opennext-initial-url` path — no Playwright header injection), then
+  register → credentials sign-in → authenticated `/trips`. Nightly +
+  `workflow_dispatch` only; not on every PR. Use `SKIP_BUILD=1` when
+  `build:cf` already ran in the same job.
 
 ## 7. What We Deliberately Don't Test
 

@@ -12,6 +12,7 @@
     "e2e": "playwright test",
     "build:cf": "opennextjs-cloudflare build",
     "preview:cf": "opennextjs-cloudflare preview",
+    "smoke:cf": "./scripts/preview-cf-smoke.sh",
     "deploy:cf": "opennextjs-cloudflare deploy",
     "db:generate": "drizzle-kit generate",
     "dev:local": "./scripts/dev-local.sh",
