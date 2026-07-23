@@ -125,6 +125,17 @@ describe("/api/trips/[tripId] — ownership (Risk #1)", () => {
     expect(await res.json()).toEqual({ error: "Not found" });
   });
 
+  it("GET for a non-existent trip returns 404 Not found (FR-006)", async () => {
+    setSession({ user: { id: "u1" } });
+    const missingTripId = "00000000-0000-4000-8000-000000000000";
+    const res = await GET(
+      jsonRequest(`http://localhost/api/trips/${missingTripId}`, "GET"),
+      tripParams(missingTripId),
+    );
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Not found" });
+  });
+
   it("PATCH as wrong owner returns 404 and leaves the row unchanged", async () => {
     setSession({ user: { id: "u2" } });
     const res = await PATCH(

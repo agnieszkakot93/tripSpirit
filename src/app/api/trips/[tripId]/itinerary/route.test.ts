@@ -154,6 +154,26 @@ describe("/api/trips/[tripId]/itinerary — generation + shape contract", () => 
     expect(mockStreamObject).not.toHaveBeenCalled();
   });
 
+  it("POST as wrong owner returns 404 and does not start generation (guardrail)", async () => {
+    seedUser(db, "u2");
+    setSession({ user: { id: "u2" } });
+    const res = await POST(postRequest(tripId), tripParams(tripId));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Not found" });
+    expect(mockStreamObject).not.toHaveBeenCalled();
+    const row = await getTripForUser(db, "u1", tripId);
+    expect(row?.itineraryJson).toBeNull();
+  });
+
+  it("POST for a missing trip returns 404 and does not start generation (FR-009)", async () => {
+    setSession({ user: { id: "u1" } });
+    const missingTripId = "00000000-0000-4000-8000-000000000000";
+    const res = await POST(postRequest(missingTripId), tripParams(missingTripId));
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "Not found" });
+    expect(mockStreamObject).not.toHaveBeenCalled();
+  });
+
   it("PATCH unauthenticated returns 401 Unauthorized (Risk #5 residual)", async () => {
     setSession(null);
     const res = await PATCH(

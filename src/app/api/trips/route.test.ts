@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppDatabase } from "@/lib/db";
 import { getTripForUser, listTripsForUser } from "@/lib/trips/queries";
 import {
+  seedTrip,
   seedUser,
   setupRouteTest,
   type MockSession,
@@ -43,12 +44,14 @@ function rawRequest(url: string, method: string, body: string) {
 }
 
 describe("GET /api/trips", () => {
+  let db: AppDatabase;
   let setSession: (session: MockSession) => void;
 
   beforeEach(() => {
     const ctx = setupRouteTest();
+    db = ctx.db;
     setSession = ctx.setSession;
-    seedUser(ctx.db, "u1");
+    seedUser(db, "u1");
   });
 
   it("returns 401 Unauthorized when unauthenticated (Risk #5)", async () => {
@@ -63,6 +66,24 @@ describe("GET /api/trips", () => {
     const res = await GET();
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([]);
+  });
+
+  it("returns only the authenticated user's trips, never another user's (FR-005 guardrail)", async () => {
+    seedUser(db, "u2");
+    setSession({ user: { id: "u1" } });
+
+    const u1Trip = await seedTrip(db, "u1", { destination: "Paris" });
+    await seedTrip(db, "u2", { destination: "Berlin" });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Array<{ id: string; destination: string }>;
+    expect(body).toHaveLength(1);
+    expect(body[0]).toMatchObject({
+      id: u1Trip.id,
+      destination: "Paris",
+    });
+    expect(body[0]).not.toHaveProperty("itineraryJson");
   });
 });
 
