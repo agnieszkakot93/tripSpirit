@@ -38,6 +38,18 @@ describe("buildItineraryPrompt", () => {
     expect(prompt).toContain("exactly 10 days");
     expect(prompt).toContain("numbered 1 through 10");
   });
+
+  it("includes destination and budget as a planning guideline, not a hard cap (PRD business logic)", () => {
+    const prompt = buildItineraryPrompt({
+      destination: "Barcelona",
+      durationDays: 4,
+      budgetAmount: 1200,
+    });
+    expect(prompt).toContain("Barcelona");
+    expect(prompt).toContain("€1200");
+    expect(prompt).toMatch(/planning guideline/i);
+    expect(prompt).toMatch(/not a strict limit/i);
+  });
 });
 
 describe("buildItinerarySchemaForDuration — Risk #3 day-count mismatch", () => {

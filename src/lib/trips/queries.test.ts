@@ -9,8 +9,10 @@ import {
   deleteTrip,
   getTripForUser,
   insertTrip,
+  listTripsForUser,
   updateItinerary,
   updateTrip,
+  updateTripItinerary,
 } from "./queries";
 
 // Create a fresh in-memory SQLite DB for each test with the project schema.
@@ -236,5 +238,129 @@ describe("deleteTrip", () => {
     seedUser(db, "u1");
     const deleted = await deleteTrip(db, "u1", "no-such-id");
     expect(deleted).toBe(false);
+  });
+});
+
+describe("listTripsForUser — FR-005 owner-scoped trip list", () => {
+  let db: AppDatabase;
+  let sqlite: Database.Database;
+  beforeEach(() => { ({ db, sqlite } = makeDb()); });
+
+  it("returns only the requesting user's trips", async () => {
+    seedUser(db, "u1");
+    seedUser(db, "u2");
+    const u1Trip = await seedTrip(db, "u1", { destination: "Lisbon" });
+    await seedTrip(db, "u2", { destination: "Berlin" });
+
+    const list = await listTripsForUser(db, "u1");
+    expect(list).toHaveLength(1);
+    expect(list[0]?.id).toBe(u1Trip.id);
+    expect(list[0]?.destination).toBe("Lisbon");
+  });
+
+  it("returns an empty array when the user has no trips", async () => {
+    seedUser(db, "u1");
+    expect(await listTripsForUser(db, "u1")).toEqual([]);
+  });
+
+  it("orders trips by createdAt descending (newest first)", async () => {
+    seedUser(db, "u1");
+    const older = await seedTrip(db, "u1", { destination: "Older" });
+    const newer = await seedTrip(db, "u1", { destination: "Newer" });
+    sqlite.exec(
+      `UPDATE trips SET created_at = 1000 WHERE id = '${older.id}'`,
+    );
+    sqlite.exec(
+      `UPDATE trips SET created_at = 2000 WHERE id = '${newer.id}'`,
+    );
+
+    const list = await listTripsForUser(db, "u1");
+    expect(list.map((t) => t.id)).toEqual([newer.id, older.id]);
+  });
+
+  it("excludes itinerary_json from list projection (guardrail: no bulk leak)", async () => {
+    seedUser(db, "u1");
+    const trip = await seedTrip(db, "u1");
+    sqlite.exec(
+      `UPDATE trips SET itinerary_json = '{"days":[{"day":1,"title":"t","activities":[]}],"totalApproxCostEur":0}' WHERE id = '${trip.id}'`,
+    );
+
+    const list = await listTripsForUser(db, "u1");
+    expect(list).toHaveLength(1);
+    expect(list[0]).not.toHaveProperty("itineraryJson");
+    expect(list[0]).not.toHaveProperty("itinerary_json");
+  });
+});
+
+const sampleItineraryForGeneration = {
+  days: [
+    {
+      day: 1,
+      title: "Day one",
+      activities: [
+        { name: "Museum", description: "Art museum", approxCostEur: 15 },
+      ],
+    },
+  ],
+  totalApproxCostEur: 15,
+};
+
+describe("updateTripItinerary — FR-009 one-shot generation guard", () => {
+  let db: AppDatabase;
+  let sqlite: Database.Database;
+  beforeEach(() => { ({ db, sqlite } = makeDb()); });
+
+  it("persists when itinerary_json is null and returns true", async () => {
+    seedUser(db, "u1");
+    const trip = await seedTrip(db, "u1");
+    const result = await updateTripItinerary(
+      db,
+      "u1",
+      trip.id,
+      sampleItineraryForGeneration,
+    );
+    expect(result).toBe(true);
+    const row = await getTripForUser(db, "u1", trip.id);
+    expect(JSON.parse(row!.itineraryJson!)).toEqual(sampleItineraryForGeneration);
+  });
+
+  it("returns false and leaves existing itinerary unchanged (no regeneration)", async () => {
+    seedUser(db, "u1");
+    const trip = await seedTrip(db, "u1");
+    const first = { ...sampleItineraryForGeneration, totalApproxCostEur: 15 };
+    const second = { ...sampleItineraryForGeneration, totalApproxCostEur: 99 };
+    await updateTripItinerary(db, "u1", trip.id, first);
+
+    const result = await updateTripItinerary(db, "u1", trip.id, second);
+    expect(result).toBe(false);
+
+    const row = await getTripForUser(db, "u1", trip.id);
+    expect(JSON.parse(row!.itineraryJson!)).toEqual(first);
+  });
+
+  it("returns false for wrong owner without mutating the row", async () => {
+    seedUser(db, "u1");
+    seedUser(db, "u2");
+    const trip = await seedTrip(db, "u1");
+
+    const result = await updateTripItinerary(
+      db,
+      "u2",
+      trip.id,
+      sampleItineraryForGeneration,
+    );
+    expect(result).toBe(false);
+    expect((await getTripForUser(db, "u1", trip.id))?.itineraryJson).toBeNull();
+  });
+
+  it("returns false for a non-existent trip id", async () => {
+    seedUser(db, "u1");
+    const result = await updateTripItinerary(
+      db,
+      "u1",
+      "no-such-id",
+      sampleItineraryForGeneration,
+    );
+    expect(result).toBe(false);
   });
 });
