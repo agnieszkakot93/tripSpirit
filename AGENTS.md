@@ -44,7 +44,7 @@ Or: Cloudflare dashboard → Workers & Pages → project → Settings → Variab
 
 Password-reset emails require `RESEND_API_KEY` (see [resend.com](https://resend.com)). Without it, forgot-password only logs the reset URL to the worker console. Default `EMAIL_FROM` uses Resend's test sender (`onboarding@resend.dev`), which only delivers to addresses verified in your Resend account.
 
-**Sentry (optional):** add `SENTRY_DSN` to `.dev.vars` for local worker routes and `npx wrangler secret put SENTRY_DSN` for production. Add **`NEXT_PUBLIC_SENTRY_DSN` to `.env.local`** (same DSN URL) for browser errors in `next dev` — `.dev.vars` does **not** expose `NEXT_PUBLIC_*` to the client bundle. Server init runs from `getAppCloudflareContext()` with `captureConsoleIntegration` so `console.warn` / `console.error` (e.g. `itinerary/generate: persist_failed`) appear as Sentry issues. Tail production logs without Sentry: `npx wrangler tail tripsprint-ai --format json --search "persist_failed"`.
+**Sentry (optional):** browser errors use `NEXT_PUBLIC_SENTRY_DSN` in `.env.local` (dev) or as a build-time env var in CI/deploy for production client bundles (`src/instrumentation-client.ts`). Server-side `SENTRY_DSN` in `.dev.vars` / `wrangler secret` is reserved for a future worker SDK hook; until then use `npx wrangler tail tripsprint-ai --format json --search "persist_failed"` for API `console.error` signals. The worker bundle stays under Cloudflare’s free-tier size cap without the Sentry server SDK.
 
 Notes:
 - Never paste a real key into chat, commit it, or log it. If one is exposed, **revoke it in the provider dashboard** — deleting the local copy does not invalidate it.
