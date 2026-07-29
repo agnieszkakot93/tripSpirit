@@ -13,7 +13,6 @@ export function initSentryIfNeeded(dsn: string | undefined): void {
 
   Sentry.init({
     dsn,
-    tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
     enableLogs: true,
     integrations: [
       // Surfaces console.warn/error (e.g. itinerary/generate: persist_failed) as Sentry events.

@@ -15,5 +15,24 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
-  widenClientFileUpload: true,
+  // Keep worker bundle under Cloudflare free-tier gzip limit; manual init in sentry-init.ts.
+  widenClientFileUpload: false,
+  autoInstrumentAppDirectory: false,
+  autoInstrumentServerFunctions: false,
+  autoInstrumentMiddleware: false,
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+    excludeReplayIframe: true,
+    excludeReplayShadowDom: true,
+    excludeReplayWorker: true,
+  },
+  webpack: {
+    autoInstrumentAppDirectory: false,
+    autoInstrumentMiddleware: false,
+    autoInstrumentServerFunctions: false,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });
