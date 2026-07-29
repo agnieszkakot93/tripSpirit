@@ -40,7 +40,7 @@ export function TripsMainArea({
       <TripsHeader userName={userName} userEmail={userEmail} />
       <div className="flex min-h-0 flex-1">
         <TripListPanel trips={trips} />
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-6">
           {children}
         </main>
       </div>

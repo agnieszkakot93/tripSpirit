@@ -46,37 +46,55 @@ export function TripWorkspace({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border border-[var(--border-muted)] bg-white shadow-[0_4px_24px_rgba(49,33,20,0.04)]">
-      <div className="relative shrink-0 pb-12">
-        <div
-          className="h-48 bg-cover bg-center"
-          style={{
-            backgroundImage: `linear-gradient(to bottom, rgba(24,20,17,0.15), rgba(24,20,17,0.55)), url('${destinationImageUrl(destination)}')`,
-          }}
-        />
-
-        <div className="absolute inset-x-6 -bottom-10 rounded-[24px] border border-[var(--border-muted)] bg-white p-5 shadow-[0_16px_48px_rgba(49,33,20,0.1)]">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-[var(--foreground)]">
-              {destination}
-            </h1>
-            <p className="mt-2 text-[var(--muted)]">
-              {formatDuration(durationDays)} · Budget {formatBudget(budgetAmount)}
-            </p>
-            <div className="mt-4">
-              <TripActions
-                id={tripId}
-                destination={destination}
-                durationDays={durationDays}
-                budgetAmount={budgetAmount}
-                hasItinerary={savedItinerary !== null}
-              />
+      <header
+        className="sticky top-0 z-20 shrink-0 border-b border-[var(--border-muted)] bg-white/95 backdrop-blur-sm"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4 px-5 py-4">
+          <div className="flex min-w-0 gap-4">
+            <div
+              className="h-14 w-14 shrink-0 rounded-xl bg-cover bg-center ring-1 ring-black/5"
+              style={{
+                backgroundImage: `url('${destinationImageUrl(destination, 112)}')`,
+              }}
+            />
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-black tracking-tight text-[var(--foreground)]">
+                {destination}
+              </h1>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {formatDuration(durationDays)} · Budget {formatBudget(budgetAmount)}
+              </p>
+              {itinerary ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-[var(--muted)]">
+                    Total est.{" "}
+                    <strong className="text-[var(--foreground)]">
+                      {formatBudget(totalCost)}
+                    </strong>
+                    {" / "}
+                    {formatBudget(budgetAmount)}
+                  </span>
+                  {withinBudget ? (
+                    <span className="badge-success">Within budget</span>
+                  ) : (
+                    <span className="badge-warning">Over budget</span>
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
+          <TripActions
+            id={tripId}
+            destination={destination}
+            durationDays={durationDays}
+            budgetAmount={budgetAmount}
+            hasItinerary={savedItinerary !== null}
+          />
         </div>
-      </div>
+      </header>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex shrink-0 gap-6 border-b border-[var(--border-muted)] px-6">
+        <div className="flex shrink-0 gap-6 border-b border-[var(--border-muted)] px-5">
           {(["itinerary", "overview"] as const).map((t) => (
             <button
               key={t}
@@ -93,7 +111,7 @@ export function TripWorkspace({
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           {tab === "itinerary" ? (
             savedItinerary ? (
               savedItinerary.valid ? (
@@ -116,25 +134,6 @@ export function TripWorkspace({
           )}
         </div>
       </div>
-
-      {itinerary ? (
-        <footer className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-[var(--border-muted)] bg-white px-6 py-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-[var(--muted)]">
-              Total estimated cost{" "}
-              <strong className="text-[var(--foreground)]">
-                {formatBudget(totalCost)}
-              </strong>{" "}
-              / {formatBudget(budgetAmount)}
-            </span>
-            {withinBudget ? (
-              <span className="badge-success">Within budget</span>
-            ) : (
-              <span className="badge-warning">Over budget</span>
-            )}
-          </div>
-        </footer>
-      ) : null}
     </div>
   );
 }
