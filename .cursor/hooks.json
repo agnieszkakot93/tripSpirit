@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/lint-after-edit.sh",
+        "matcher": "Write",
+        "timeout": 15
+      },
+      {
+        "command": ".cursor/hooks/typecheck-after-edit.sh",
+        "matcher": "Write",
+        "timeout": 30
+      },
+      {
+        "command": ".cursor/hooks/related-tests-after-edit.sh",
+        "matcher": "Write",
+        "timeout": 60
+      }
+    ]
+  }
+}

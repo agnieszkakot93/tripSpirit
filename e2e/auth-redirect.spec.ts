@@ -37,7 +37,7 @@ test.describe("Risk #5: protected page auth redirects", () => {
     ).toBeVisible();
   });
 
-  test("sign-in from protected redirect returns to callback destination", async ({
+  test("register from protected redirect returns to callback destination", async ({
     page,
   }) => {
     const email = `e2e-redirect-${Date.now()}@example.com`;

@@ -25,7 +25,7 @@ npm run dev
 
 # Secrets & environment variables
 
-Code reads every secret via `getCloudflareContext().env.<NAME>` (e.g. `env.OPENAI_API_KEY`, `env.AUTH_SECRET`) — **never `process.env`** (it is not reliably populated on the workerd runtime). New secrets must be added to the `CloudflareEnv` type in `cloudflare-env.d.ts` (regenerate with `npx wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts`).
+Code reads every secret via `getCloudflareContext().env.<NAME>` (e.g. `env.OPENAI_API_KEY`, `env.AUTH_SECRET`, `env.SENTRY_DSN`) — **never `process.env`** (it is not reliably populated on the workerd runtime). New secrets must be added to the `CloudflareEnv` type in `cloudflare-env.d.ts` (regenerate with `npx wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts`).
 
 Where each secret lives by environment:
 
@@ -38,10 +38,13 @@ Where each secret lives by environment:
 ```bash
 npx wrangler secret put OPENAI_API_KEY
 npx wrangler secret put RESEND_API_KEY
+npx wrangler secret put SENTRY_DSN
 ```
 Or: Cloudflare dashboard → Workers & Pages → project → Settings → Variables & Secrets → add as a **Secret** (not plaintext). `.dev.vars` is local-only and never deploys — provisioning the production secret is a separate, required step.
 
 Password-reset emails require `RESEND_API_KEY` (see [resend.com](https://resend.com)). Without it, forgot-password only logs the reset URL to the worker console. Default `EMAIL_FROM` uses Resend's test sender (`onboarding@resend.dev`), which only delivers to addresses verified in your Resend account.
+
+**Sentry (optional):** add `SENTRY_DSN` to `.dev.vars` for local worker routes and `npx wrangler secret put SENTRY_DSN` for production. Add **`NEXT_PUBLIC_SENTRY_DSN` to `.env.local`** (same DSN URL) for browser errors in `next dev` — `.dev.vars` does **not** expose `NEXT_PUBLIC_*` to the client bundle. Server init runs from `getAppCloudflareContext()` with `captureConsoleIntegration` so `console.warn` / `console.error` (e.g. `itinerary/generate: persist_failed`) appear as Sentry issues. Tail production logs without Sentry: `npx wrangler tail tripsprint-ai --format json --search "persist_failed"`.
 
 Notes:
 - Never paste a real key into chat, commit it, or log it. If one is exposed, **revoke it in the provider dashboard** — deleting the local copy does not invalidate it.
@@ -59,3 +62,11 @@ After implementing any change, verify it by running the app — not by running t
 The skill starts the dev server, drives the affected flows through the real UI, and reports a PASS/FAIL with observations. A passing typecheck or lint is not a substitute — run the app and confirm the feature works at its actual surface (browser, API endpoint, CLI).
 
 Automated checks (`npx tsc --noEmit`, `npm run lint`, `npm run build`) are still required per the plan's success criteria, but they come in addition to runtime verification, not instead of it.
+
+# E2E tests
+
+Browser-level tests live under `e2e/`. Before generating or reviewing E2E specs, read `e2e/e2e-quality-rules.md` and the seed exemplar `e2e/seed.spec.ts`. Drive risk-based E2E work with `/10x-e2e` (skill in `.cursor/skills/10x-e2e/`).
+
+- Run all: `npm run e2e`
+- Auth session for storageState specs: `playwright/.auth/user.json` (gitignored; created by `e2e/auth.setup.ts`)
+- Generation in E2E uses `E2E_ITINERARY_FIXTURE=true` in `.dev.vars` — never set in production

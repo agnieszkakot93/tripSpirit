@@ -15,6 +15,8 @@ declare namespace Cloudflare {
 		/** Dev/CI only — never set on production Worker. Enables fixture itinerary stream. */
 		E2E_ITINERARY_FIXTURE?: string;
 		RESEND_API_KEY?: string;
+		/** Optional — Sentry error monitoring (worker secret). */
+		SENTRY_DSN?: string;
 		WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
 		// Cloudflare Email Sending. Optional: absent in local dev (no send_email
 		// binding in wrangler.dev.jsonc) — prefer RESEND_API_KEY; see src/lib/email.ts.

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AppDatabase } from "@/lib/db";
 import type { Itinerary } from "@/lib/trips/itinerary";
+import * as tripQueries from "@/lib/trips/queries";
 import { getTripForUser, updateTripItinerary } from "@/lib/trips/queries";
 import {
   seedTrip,
@@ -267,6 +268,61 @@ describe("/api/trips/[tripId]/itinerary — generation + shape contract", () => 
     const row = await getTripForUser(db, "u1", tripId);
     expect(row?.itineraryJson).not.toBeNull();
     expect(JSON.parse(row!.itineraryJson!)).toEqual(complete);
+  });
+
+  it("failed waitUntil persist leaves itinerary_json null and logs persist_failed (Risk #6)", async () => {
+    setSession({ user: { id: "u1" } });
+    const complete = sampleItinerary(TRIP_DURATION_DAYS);
+    const persistError = new Error("D1 write failed");
+    const persistSpy = vi
+      .spyOn(tripQueries, "updateTripItinerary")
+      .mockRejectedValue(persistError);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const res = await POST(postRequest(tripId), tripParams(tripId));
+      expect(res.status).toBe(200);
+
+      lastStreamObjectOptions.current?.onFinish?.({ object: complete });
+      await flushWaitUntil();
+
+      const row = await getTripForUser(db, "u1", tripId);
+      expect(row?.itineraryJson).toBeNull();
+      expect(errorSpy).toHaveBeenCalledWith(
+        "itinerary/generate: persist_failed",
+        expect.objectContaining({ tripId, error: persistError }),
+      );
+    } finally {
+      persistSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
+  });
+
+  it("no-op waitUntil persist (false) leaves itinerary_json null and logs persist_failed (Risk #6)", async () => {
+    setSession({ user: { id: "u1" } });
+    const complete = sampleItinerary(TRIP_DURATION_DAYS);
+    const persistSpy = vi
+      .spyOn(tripQueries, "updateTripItinerary")
+      .mockResolvedValue(false);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      const res = await POST(postRequest(tripId), tripParams(tripId));
+      expect(res.status).toBe(200);
+
+      lastStreamObjectOptions.current?.onFinish?.({ object: complete });
+      await flushWaitUntil();
+
+      const row = await getTripForUser(db, "u1", tripId);
+      expect(row?.itineraryJson).toBeNull();
+      expect(errorSpy).toHaveBeenCalledWith(
+        "itinerary/generate: persist_failed",
+        expect.objectContaining({ tripId, reason: "no_row_updated" }),
+      );
+    } finally {
+      persistSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
   });
 });
 

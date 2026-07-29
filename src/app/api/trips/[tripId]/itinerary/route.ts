@@ -41,6 +41,36 @@ function fixtureTextStreamResponse(itinerary: Itinerary): Response {
   });
 }
 
+type WaitUntilContext = {
+  waitUntil: (promise: Promise<unknown>) => void;
+};
+
+/**
+ * Schedule a post-stream D1 write via waitUntil. The HTTP response may already
+ * be 200 when this runs — log persist failures so production monitoring / tail
+ * can surface silent data loss (Risk #6).
+ */
+function scheduleItineraryPersist(
+  ctx: WaitUntilContext,
+  tripId: string,
+  persist: Promise<boolean>,
+) {
+  ctx.waitUntil(
+    persist
+      .then((written) => {
+        if (!written) {
+          console.error("itinerary/generate: persist_failed", {
+            tripId,
+            reason: "no_row_updated",
+          });
+        }
+      })
+      .catch((error: unknown) => {
+        console.error("itinerary/generate: persist_failed", { tripId, error });
+      }),
+  );
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ tripId: string }> },
@@ -117,7 +147,11 @@ export async function POST(
       if (!isItineraryCompleteForDuration(fixture, trip.durationDays)) {
         return NextResponse.json({ error: "Internal error" }, { status: 500 });
       }
-      ctx.waitUntil(updateTripItinerary(db, userId, tripId, fixture));
+      scheduleItineraryPersist(
+        ctx,
+        tripId,
+        updateTripItinerary(db, userId, tripId, fixture),
+      );
       return fixtureTextStreamResponse(fixture);
     }
 
@@ -151,7 +185,11 @@ export async function POST(
           object &&
           isItineraryCompleteForDuration(object, trip.durationDays)
         ) {
-          ctx.waitUntil(updateTripItinerary(db, userId, tripId, object));
+          scheduleItineraryPersist(
+            ctx,
+            tripId,
+            updateTripItinerary(db, userId, tripId, object),
+          );
         } else if (object) {
           console.error("itinerary generation incomplete", {
             tripId,

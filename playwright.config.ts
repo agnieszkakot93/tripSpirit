@@ -18,7 +18,33 @@ export default defineConfig({
   },
   projects: [
     {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
+      name: "chromium-authenticated",
+      testMatch:
+        /seed\.spec\.ts|itinerary-persists-after-reload\.spec\.ts|trip-list-persists-after-reload\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        storageState: "playwright/.auth/user.json",
+      },
+      dependencies: ["setup"],
+    },
+    {
       name: "chromium",
+      testIgnore: [
+        /auth\.setup\.ts/,
+        /auth-redirect\.spec\.ts/,
+        /seed\.spec\.ts/,
+        /itinerary-persists-after-reload\.spec\.ts/,
+        /trip-list-persists-after-reload\.spec\.ts/,
+      ],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "chromium-unauth",
+      testMatch: /auth-redirect\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
   ],

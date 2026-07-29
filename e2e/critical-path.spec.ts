@@ -78,5 +78,12 @@ test.describe("Critical path: sign-in → create → generate → edit", () => {
     ).toHaveValue(editedActivity);
     await expect(page.getByRole("button", { name: /Day 1/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Day 3/i })).toBeVisible();
+
+    // Cleanup
+    page.once("dialog", (dialog) => {
+      void dialog.accept();
+    });
+    await page.getByRole("main").getByRole("button", { name: "Delete" }).click();
+    await expect(page).toHaveURL(/\/trips\/?$/);
   });
 });

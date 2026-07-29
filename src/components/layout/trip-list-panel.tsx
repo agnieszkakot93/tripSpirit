@@ -170,6 +170,7 @@ export function TripListPanel({ trips }: TripListPanelProps) {
           <SearchIcon className="search-field-icon" />
           <input
             type="search"
+            aria-label="Search trips"
             placeholder="Search trips..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}

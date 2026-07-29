@@ -45,7 +45,7 @@ test.describe("Profile delete: account lifecycle in browser", () => {
     await page.goto("/login");
     await page.getByPlaceholder("Email").fill(email);
     await page.getByPlaceholder("Password").fill(password);
-    await page.getByRole("main").locator("form button.btn-primary").click();
+    await page.locator("form").getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByText("Invalid email or password")).toBeVisible();
   });
 });
